@@ -5,6 +5,8 @@
  * In my opinion, given that most links in the webchild graph are 1 and a tiny portion is slightly above 1,
  * I think this could be a more efficient function for getting multiple, useful links than other algorithms.
  * 
+ * WC files must have been processed by ReadCSV and Grapher.
+ * 
  */
 
 import java.util.Scanner;
