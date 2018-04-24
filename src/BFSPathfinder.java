@@ -1,3 +1,7 @@
+/*
+ * Attempting a bidirectional BFS, still a work in progress
+ * 
+ */
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
