@@ -33,7 +33,7 @@ public class YenShortestPaths implements Comparator<Node>{
 	List<String> container;
 	String q1,q2;
 	int q1id,q2id;
-	GraphDB graph;
+	CleansedGraphDB graph;
 	public YenShortestPaths(String query1, String query2) throws IOException, InterruptedException {
 		answers = new LinkedList<String>();
 		container = new LinkedList<String>();
@@ -44,7 +44,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		
 		getidmaps();
 		processquery(query1,query2);
-		graph = new GraphDB(109842);
+		graph = new CleansedGraphDB(109842);
 		
 		handler(10);
 		decode();
@@ -53,24 +53,43 @@ public class YenShortestPaths implements Comparator<Node>{
 	}
 	
 	public void handler(int k) throws IOException {
+		int[] not = new int[0];
 		if(container.size()==0) {
-			obtainpaths();
+			obtainpaths(q1id,q2id, not);
+			reset();
 			if(pathlist.size()==0) {
 				System.out.println("No paths at all.");
 				System.exit(0);
 			}
 			write();
+
+			
 		}
 		for(int i=0; i<k-1; i+=1) {
+			System.out.println(container.get(container.size()-3));
+			//System.out.println(pathlist.size()/3 + " routes in pathlist and " + container.size()/3 + " routes in container.");
 			String[] arr = container.get(container.size()-3).split(",");
-
+			String[] rsid = container.get(container.size()-2).split(",");
+			String[] weight = container.get(container.size()-1).split(",");
+			
 			for(int j=0; j<arr.length-1; j+=1) {
+				not = new int[j+1];
+				for(int m=0; m<=j; m+=1) {
+					graph.nodes[Integer.parseInt(arr[m])].visited = true;
+					not[m] = graph.nodes[Integer.parseInt(arr[m])].id;
+					if(m!=0) {
+						System.out.println("Returning node " + Integer.parseInt(arr[m]));
+						graph.nodes[Integer.parseInt(arr[m])].bestparent = Integer.parseInt(arr[m-1]);
+						System.out.println(m + "< order - " + graph.nodes[Integer.parseInt(arr[m])].bestparent);
+						graph.nodes[Integer.parseInt(arr[m])].bestlink = Integer.parseInt(rsid[m-1]);
+						graph.nodes[Integer.parseInt(arr[m])].bestweight = Double.parseDouble(weight[m-1]);
+					} 
+				}
 				// Temporarily remove a certain link
 				for(int a=0; a< graph.nodes[Integer.parseInt(arr[j])].relations.size(); a+=1) {
-					
 					if(graph.nodes[Integer.parseInt(arr[j])].relations.get(a)[0].equals(arr[j+1].toString())) {
 						temp1 = graph.nodes[Integer.parseInt(arr[j])].relations.remove(a);
-						System.out.println("Link removed");
+						//System.out.println("Link removed");
 						break;
 					}
 				}
@@ -78,7 +97,7 @@ public class YenShortestPaths implements Comparator<Node>{
 				for(int a=0; a< graph.nodes[Integer.parseInt(arr[j+1])].relations.size(); a+=1) {
 					if(graph.nodes[Integer.parseInt(arr[j+1])].relations.get(a)[0].equals(arr[j].toString())) {
 						temp2 = graph.nodes[Integer.parseInt(arr[j+1])].relations.remove(a);
-						System.out.println("Link removed");
+						//System.out.println("Link removed");
 						break;
 					}
 				}
@@ -89,8 +108,11 @@ public class YenShortestPaths implements Comparator<Node>{
 					System.exit(0);
 				}
 				// Do djikstras on graph with missing link
-				obtainpaths();
+				System.out.println(Integer.parseInt(arr[j]) + " node to be spur.");
+				obtainpaths(Integer.parseInt(arr[j]),q2id, not);
+				
 				reset();
+				
 				
 				// Add the link back
 				
@@ -123,6 +145,7 @@ public class YenShortestPaths implements Comparator<Node>{
 				index = a-2;
 			}
 		}
+		System.out.println("Containing next path.");
 		container.add(pathlist.remove(index));
 		container.add(pathlist.remove(index));
 		container.add(pathlist.remove(index));
@@ -153,7 +176,7 @@ public class YenShortestPaths implements Comparator<Node>{
 	}
 	
 	public void getidmaps() throws IOException {
-		scan1 = new Scanner(new File("objectidstrunc.csv"));
+		scan1 = new Scanner(new File("may/objectids1.csv"));
 		scan1.useDelimiter("\\r?\\\n");
 		while(scan1.hasNext()) {
 			String str = scan1.next();
@@ -162,7 +185,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		}
 		System.out.println(objmap.size() + " objects.");
 		
-		scan2 = new Scanner(new File("relationidstrunc.csv"));
+		scan2 = new Scanner(new File("may/relationids1.csv"));
 		scan2.useDelimiter("\\r?\\\n");
 		while(scan2.hasNext()) {
 			String str = scan2.next();
@@ -172,28 +195,28 @@ public class YenShortestPaths implements Comparator<Node>{
 		System.out.println(rsmap.size() + " unique relations.");
 	} 
 	
-	public void obtainpaths() {
+	public void obtainpaths(int id1,int id2, int[] not) {
 		// djikstra's implementation (with PQ)
 
 		pq = new PriorityQueue<Node>(this);
 		
-		graph.nodes[q1id].visited = true;
-		graph.nodes[q1id].dist = 0;
+		graph.nodes[id1].visited = true;
+		graph.nodes[id1].dist = 0;
 		
-		pq.add(graph.nodes[q1id]);
+		pq.add(graph.nodes[id1]);
 		
 		while(pq.size()!=0) {
-			move();
+			move(not);
 		}
-		if(graph.nodes[q2id].dist==Double.POSITIVE_INFINITY) {
+		if(graph.nodes[id2].dist==Double.POSITIVE_INFINITY) {
 			System.out.println("No paths. Exiting Djikstra.");
 			return;
 		}
 		
-		Node end  = graph.nodes[q2id]; 
+		Node end  = graph.nodes[id2]; 
 		Stack<String> p = new Stack<String>();
 		while(end.id!=q1id) {
-
+			System.out.println(end.id + " node being processed. Parent is " + end.dist);
 			p.push(Double.toString(end.bestweight));
 			p.push(Integer.toString(end.bestlink));
 			p.push(Integer.toString(end.id));
@@ -208,12 +231,16 @@ public class YenShortestPaths implements Comparator<Node>{
 			link += p.pop() + ",";
 			weight += p.pop() + ",";
 		}
+		if(pathlist.contains(nodez) || container.contains(nodez)) {
+			System.out.println("Repeated path, not indexing.");
+			return;
+		}
 		pathlist.add(nodez);
 		pathlist.add(link);
 		pathlist.add(weight);
-		System.out.println("Shortest path is: " + graph.nodes[q2id].dist);
+		//System.out.println("Shortest path is: " + graph.nodes[id2].dist);
 		
-		System.out.println(q1id+","+q2id);
+		System.out.println(id1+","+id2 +" is path identified.");
 	}
 	
 	public void reset() {
@@ -226,7 +253,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		}
 	}
 	
-	public void move() {
+	public void move(int[] not) {
 		
 		Node x = pq.poll();
 		if(x.equals(graph.nodes[q2id])) {
@@ -234,11 +261,17 @@ public class YenShortestPaths implements Comparator<Node>{
 			pq.clear();
 			return;
 		}
-		System.out.println("Present distance is " + x.dist);
+		//System.out.println("Present distance is " + x.dist);
 		for(String[] arr : x.relations ) {
 			double newdist = Double.parseDouble(arr[2]) + x.dist;
 			Node y = graph.nodes[Integer.parseInt(arr[0])];
-			if(y.dist > newdist) {
+			boolean touch = true;
+			for(int id : not) {
+				if(y.id == id) {
+					touch = false;
+				}
+			}
+			if(y.dist > newdist && touch) {
 				y.dist = newdist;
 				y.bestparent = x.id;
 				y.bestlink = Integer.parseInt(arr[1]);
@@ -296,10 +329,10 @@ public class YenShortestPaths implements Comparator<Node>{
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		try {
-			new YenShortestPaths("Rattus","Spyeria");
+			YenShortestPaths x = new YenShortestPaths("chestnut#n#2","chestnut#n#1");
 		} catch(Exception e) {
 			e.printStackTrace();
-		}
+		} 
 		long stopTime = System.currentTimeMillis();
 	    long elapsedTime = stopTime - startTime;
 	    System.out.println(elapsedTime + " miliseconds elapsed.");

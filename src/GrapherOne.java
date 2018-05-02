@@ -1,9 +1,10 @@
 /*
- *  Grapher class deals with output.csv produced by the ReadCSV class. 
+ *  GrapherOne class deals with output produced by the ReadCSVOne class. 
+
  *  This class gives each object an ID, and each type of relationship a unique ID
- * 	The map of objects to their ID is saved as objectsid.csv and relationships to their ID as relationshipsid.csv
+ * 	The map of objects to their ID is saved as objectsid1.csv and relationships to their ID as relationshipsid1.csv
  * 
- *  The links are saved in connections.csv
+ *  The links are saved in connections1.csv
  */
 
 import java.util.Scanner;
@@ -15,11 +16,10 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.HashMap;
 
-// Expected 13515915 
 // Save link and save node data.
 // collection of nodes, each node has a unique ID
 // collection of edges, each edge has two node IDs (or however many nodes an edge connects to)
-public class Grapher {
+public class GrapherOne {
 	Scanner scanner;
 	//Set<String> relationships;
 	Map<String, Integer> objmap;
@@ -27,14 +27,13 @@ public class Grapher {
 	private FileWriter file;
 	private BufferedWriter bw;
 	
-	public Grapher(String address) throws IOException {
-		// Scan output.csv from readcsv. 13515915 triples expected, 109841 objects and 32971 types of relationships.
+	public GrapherOne(String address) throws IOException {
+		// Scan dataset1.csv from readcsv. 
 		scanner = new Scanner(new File(address));
 		scanner.useDelimiter("\\r?\\\n");
-		//relationships = new HashSet<String>();
 		
 		//Write connections to new csv
-		file = new FileWriter("connections.csv");
+		file = new FileWriter("may/connections1.csv");
     	bw = new BufferedWriter(file);
 		
 		objmap = new HashMap<String,Integer>();
@@ -69,7 +68,7 @@ public class Grapher {
 		file.close();
 		
 		// Write object IDs file
-		file = new FileWriter("objectids.csv");
+		file = new FileWriter("may/objectids1.csv");
     	bw = new BufferedWriter(file);
     	
     	for(Map.Entry<String,Integer> a : objmap.entrySet()) {
@@ -80,7 +79,7 @@ public class Grapher {
 		file.close();
 		
 		// Write RS IDs file
-		file = new FileWriter("relationids.csv");
+		file = new FileWriter("may/relationids1.csv");
     	bw = new BufferedWriter(file);
     	
     	for(Map.Entry<String,Integer> a : rsmap.entrySet()) {
@@ -97,7 +96,7 @@ public class Grapher {
 	
 	public static void main(String[] args) {
 		try {
-		new Grapher("outputtrunc.csv");
+		new GrapherOne("may/dataset1.csv");
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

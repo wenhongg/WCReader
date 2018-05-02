@@ -7,6 +7,8 @@ import java.util.List;
 import java.io.*;
 import java.util.LinkedList;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.HashSet;
 
 // In the full graph, 109841 objects are expected.
 public class GraphDB {
@@ -20,7 +22,7 @@ public class GraphDB {
 			nodes[i] = new Node(i);
 		}
 		
-		scanner = new Scanner(new File("connectionstrunc.csv"));
+		scanner = new Scanner(new File("cleanconnectionstrunc.csv"));
 		scanner.useDelimiter("\\r?\\\n");
 		int count =0;
 		int selfcount = 0;
@@ -49,6 +51,32 @@ public class GraphDB {
 			System.out.println(count + "relationship parsed.");
 		
 		}
+		/*
+		int deletecount = 0;
+		for(Node x: nodes) {
+			Set<Integer> set = new HashSet<Integer>();
+			List<Integer> repeatlist = new LinkedList<Integer>();
+			for(int i=0; i<x.relations.size(); i+=1) {
+				if(set.contains(Integer.parseInt(x.relations.get(i)[0]))) {
+					//System.out.println("Deleting repeat");
+					repeatlist.add(Integer.parseInt(x.relations.get(i)[0]));
+				} else {
+					set.add(Integer.parseInt(x.relations.get(i)[0]));
+				}
+			}
+			int counta=0 ;
+			for(int a: repeatlist) {
+				for(int i=0; i<x.relations.size();i+=1) {
+					if(Integer.parseInt(x.relations.get(i)[0]) == a) {
+						x.relations.remove(i);
+						counta +=1;
+						System.out.println("Removed " + counta);
+						break;
+					}
+				}
+			}
+		}
+		*/
 		System.out.println("Graph successfully created.");
 		scanner.close();
 	}
