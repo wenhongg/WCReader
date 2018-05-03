@@ -22,7 +22,7 @@ public class GraphDB {
 			nodes[i] = new Node(i);
 		}
 		
-		scanner = new Scanner(new File("cleanconnectionstrunc.csv"));
+		scanner = new Scanner(new File("connections1.csv"));
 		scanner.useDelimiter("\\r?\\\n");
 		int count =0;
 		int selfcount = 0;

@@ -66,11 +66,12 @@ public class ReadCSVTwo {
 			
 			// Write each CSV line:
 			objmap.put(Integer.parseInt(values[id1]), values[word1]);
+			objmap.put(Integer.parseInt(values[id2]), values[word2]);
 			if(!rsmap.containsKey(values[rs])) {
 				rsmap.put(values[rs], rsmap.size()+1);
 			}
 			
-			String output = values[id1] + "," + values[rs] + "," + values[id2] + "," + values[score] +"\n";
+			String output = values[id1] + "," + rsmap.get(values[rs]) + "," + values[id2] + "," + values[score] +"\n";
 			bw.write(output);
 
 			System.out.println("Parsed entry " + counter + ".");
@@ -78,7 +79,7 @@ public class ReadCSVTwo {
 		bw.flush();
 		size = counter;
 		System.out.println("Size: " + size);
-		netcount += size;	
+		netcount += size;
 		System.out.println("Data successfully parsed from " + place);
 		scanner.close();
 		
@@ -87,7 +88,7 @@ public class ReadCSVTwo {
 	
 	public void writemaps() throws IOException {
 		// Write object IDs file
-				file = new FileWriter("may/objectids2.csv");
+				file = new FileWriter("xobjectids2.csv");
 				bw = new BufferedWriter(file);
 				    	
 				for(Map.Entry<Integer,String> a : objmap.entrySet()) {
@@ -98,7 +99,7 @@ public class ReadCSVTwo {
 				file.close();
 						
 				// Write RS IDs file
-				file = new FileWriter("may/relationids2.csv");
+				file = new FileWriter("relationids2.csv");
 				bw = new BufferedWriter(file);
 				   	
 				for(Map.Entry<String,Integer> a : rsmap.entrySet()) {
@@ -114,7 +115,7 @@ public class ReadCSVTwo {
 	
 	public static void main(String[] args) {
 		try {
-		new ReadCSVTwo("may/connections2.csv");
+		new ReadCSVTwo("xconnections2.csv");
 		} catch(Exception e) {
 			e.printStackTrace();
 			System.exit(0);

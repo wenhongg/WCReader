@@ -33,7 +33,7 @@ public class YenShortestPaths implements Comparator<Node>{
 	List<String> container;
 	String q1,q2;
 	int q1id,q2id;
-	CleansedGraphDB graph;
+	GraphDB graph;
 	public YenShortestPaths(String query1, String query2) throws IOException, InterruptedException {
 		answers = new LinkedList<String>();
 		container = new LinkedList<String>();
@@ -44,7 +44,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		
 		getidmaps();
 		processquery(query1,query2);
-		graph = new CleansedGraphDB(109842);
+		graph = new GraphDB(109842);
 		
 		handler(10);
 		decode();
@@ -176,7 +176,7 @@ public class YenShortestPaths implements Comparator<Node>{
 	}
 	
 	public void getidmaps() throws IOException {
-		scan1 = new Scanner(new File("may/objectids1.csv"));
+		scan1 = new Scanner(new File("may/cleanedobjectids2.csv"));
 		scan1.useDelimiter("\\r?\\\n");
 		while(scan1.hasNext()) {
 			String str = scan1.next();
@@ -185,7 +185,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		}
 		System.out.println(objmap.size() + " objects.");
 		
-		scan2 = new Scanner(new File("may/relationids1.csv"));
+		scan2 = new Scanner(new File("may/relationids2.csv"));
 		scan2.useDelimiter("\\r?\\\n");
 		while(scan2.hasNext()) {
 			String str = scan2.next();
@@ -329,7 +329,7 @@ public class YenShortestPaths implements Comparator<Node>{
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		try {
-			YenShortestPaths x = new YenShortestPaths("chestnut#n#2","chestnut#n#1");
+			YenShortestPaths x = new YenShortestPaths("acacia","academy");
 		} catch(Exception e) {
 			e.printStackTrace();
 		} 

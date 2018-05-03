@@ -33,7 +33,7 @@ public class GrapherOne {
 		scanner.useDelimiter("\\r?\\\n");
 		
 		//Write connections to new csv
-		file = new FileWriter("may/connections1.csv");
+		file = new FileWriter("connections1.csv");
     	bw = new BufferedWriter(file);
 		
 		objmap = new HashMap<String,Integer>();
@@ -68,7 +68,7 @@ public class GrapherOne {
 		file.close();
 		
 		// Write object IDs file
-		file = new FileWriter("may/objectids1.csv");
+		file = new FileWriter("objectids1.csv");
     	bw = new BufferedWriter(file);
     	
     	for(Map.Entry<String,Integer> a : objmap.entrySet()) {
@@ -79,7 +79,7 @@ public class GrapherOne {
 		file.close();
 		
 		// Write RS IDs file
-		file = new FileWriter("may/relationids1.csv");
+		file = new FileWriter("relationids1.csv");
     	bw = new BufferedWriter(file);
     	
     	for(Map.Entry<String,Integer> a : rsmap.entrySet()) {
@@ -96,7 +96,7 @@ public class GrapherOne {
 	
 	public static void main(String[] args) {
 		try {
-		new GrapherOne("may/dataset1.csv");
+		new GrapherOne("dataset1.csv");
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
