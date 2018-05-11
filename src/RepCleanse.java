@@ -68,7 +68,7 @@ public class RepCleanse {
 		bw.close();
 		file.close();
 		
-		file = new FileWriter("cleanconnections2.csv");
+		file = new FileWriter("may/cleanconnections2.csv");
     	bw = new BufferedWriter(file);
     	
     	for(int i=0;i<list.size();i+=1) {

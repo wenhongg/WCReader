@@ -1,20 +1,29 @@
 /* 
  * GraphDB class reads the file connections.csv and produces the entire graph. 
+ * GraphDB class is used for SET 2
  * GraphDB is called upon by other classes such as Pathfinder, ShortestPaths and YenShortestPaths 
  */
 
 import java.util.List;
+import java.util.Map;
 import java.io.*;
 import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.HashMap;
 import java.util.HashSet;
-
+	
 // In the full graph, 109841 objects are expected.
 public class GraphDB {
+	Scanner scan1,scan2;
+	Map<Integer,String> objmap,rsmap;
 	Node[] nodes;
 	Scanner scanner;
-	public GraphDB(int nodes1) throws FileNotFoundException {
+	String objectid, relationid, connection;
+	public GraphDB(int data) throws IOException {
+		objmap = new HashMap<Integer,String>();
+		rsmap = new HashMap<Integer,String>();
+		int nodes1 = 109842;
 		System.out.println("Producing graph.");
 		nodes = new Node[nodes1];
 		
@@ -22,7 +31,45 @@ public class GraphDB {
 			nodes[i] = new Node(i);
 		}
 		
-		scanner = new Scanner(new File("connections1.csv"));
+		if(data == 1) {
+			connection = "may/connections1.csv";
+			relationid = "may/relationids1.csv";
+			objectid = "may/objectids1.csv";
+			
+		} else if(data == 2) {
+			connection = "may/connections2.csv";
+			relationid = "may/relationids2.csv";
+			objectid = "may/objectids2.csv";
+		} else {
+			System.out.println("Dataset chosen must be either 1 or 2.");
+			System.exit(0);
+		}
+		getidmaps();
+	}
+	
+	public void getidmaps() throws IOException {
+		scan1 = new Scanner(new File(objectid));
+		scan1.useDelimiter("\\r?\\\n");
+		while(scan1.hasNext()) {
+			String str = scan1.next();
+			String[] arr = str.split(",");
+			objmap.put(Integer.parseInt(arr[1]), arr[0]);
+		}
+		System.out.println(objmap.size() + " objects.");
+		
+		scan2 = new Scanner(new File(relationid));
+		scan2.useDelimiter("\\r?\\\n");
+		while(scan2.hasNext()) {
+			String str = scan2.next();
+			String[] arr = str.split(",");
+			rsmap.put(Integer.parseInt(arr[1]), arr[0]);
+		}
+		System.out.println(rsmap.size() + " unique relations.");
+
+	}
+	
+	public void getconnections() throws IOException {
+		scanner = new Scanner(new File(connection));
 		scanner.useDelimiter("\\r?\\\n");
 		int count =0;
 		int selfcount = 0;
@@ -51,34 +98,6 @@ public class GraphDB {
 			System.out.println(count + "relationship parsed.");
 		
 		}
-		/*
-		int deletecount = 0;
-		for(Node x: nodes) {
-			Set<Integer> set = new HashSet<Integer>();
-			List<Integer> repeatlist = new LinkedList<Integer>();
-			for(int i=0; i<x.relations.size(); i+=1) {
-				if(set.contains(Integer.parseInt(x.relations.get(i)[0]))) {
-					//System.out.println("Deleting repeat");
-					repeatlist.add(Integer.parseInt(x.relations.get(i)[0]));
-				} else {
-					set.add(Integer.parseInt(x.relations.get(i)[0]));
-				}
-			}
-			int counta=0 ;
-			for(int a: repeatlist) {
-				for(int i=0; i<x.relations.size();i+=1) {
-					if(Integer.parseInt(x.relations.get(i)[0]) == a) {
-						x.relations.remove(i);
-						counta +=1;
-						System.out.println("Removed " + counta);
-						break;
-					}
-				}
-			}
-		}
-		*/
-		System.out.println("Graph successfully created.");
-		scanner.close();
 	}
 	
 	public void graphstats() {

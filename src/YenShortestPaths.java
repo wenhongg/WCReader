@@ -37,19 +37,24 @@ public class YenShortestPaths implements Comparator<Node>{
 	public YenShortestPaths(String query1, String query2) throws IOException, InterruptedException {
 		answers = new LinkedList<String>();
 		container = new LinkedList<String>();
-		objmap = new HashMap<Integer,String>();
-		rsmap = new HashMap<Integer,String>();
 		q1 = query1;
 		q2 = query2;
 		
+
+		graph = new GraphDB(2);
 		getidmaps();
 		processquery(query1,query2);
-		graph = new GraphDB(109842);
+		graph.getconnections();
 		
 		handler(10);
 		decode();
 		
 		System.out.println("YenShortestPaths ended.");
+	}
+	
+	public void getidmaps() {
+		rsmap = graph.rsmap;
+		objmap = graph.objmap;
 	}
 	
 	public void handler(int k) throws IOException {
@@ -175,25 +180,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		// Program will not run unless queries are checked to be valid.
 	}
 	
-	public void getidmaps() throws IOException {
-		scan1 = new Scanner(new File("may/cleanedobjectids2.csv"));
-		scan1.useDelimiter("\\r?\\\n");
-		while(scan1.hasNext()) {
-			String str = scan1.next();
-			String[] arr = str.split(",");
-			objmap.put(Integer.parseInt(arr[1]), arr[0]);
-		}
-		System.out.println(objmap.size() + " objects.");
-		
-		scan2 = new Scanner(new File("may/relationids2.csv"));
-		scan2.useDelimiter("\\r?\\\n");
-		while(scan2.hasNext()) {
-			String str = scan2.next();
-			String[] arr = str.split(",");
-			rsmap.put(Integer.parseInt(arr[1]), arr[0]);
-		}
-		System.out.println(rsmap.size() + " unique relations.");
-	} 
+	
 	
 	public void obtainpaths(int id1,int id2, int[] not) {
 		// djikstra's implementation (with PQ)
@@ -329,7 +316,7 @@ public class YenShortestPaths implements Comparator<Node>{
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		try {
-			YenShortestPaths x = new YenShortestPaths("acacia","academy");
+			YenShortestPaths x = new YenShortestPaths("fat","guy");
 		} catch(Exception e) {
 			e.printStackTrace();
 		} 
