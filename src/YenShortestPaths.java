@@ -1,5 +1,6 @@
 /*
  * Yen's algorithm is implemented here. This algorithm returns the k-shortest paths. 
+
  * Djikstra's is repeatedly used.
  * 
  * WC files must have been processed by ReadCSV and Grapher.
@@ -34,14 +35,14 @@ public class YenShortestPaths implements Comparator<Node>{
 	String q1,q2;
 	int q1id,q2id;
 	GraphDB graph;
-	public YenShortestPaths(String query1, String query2) throws IOException, InterruptedException {
+	
+	public YenShortestPaths(String query1, String query2, GraphDB graph1) throws IOException, InterruptedException {
 		answers = new LinkedList<String>();
 		container = new LinkedList<String>();
 		q1 = query1;
 		q2 = query2;
 		
-
-		graph = new GraphDB(2);
+		graph = graph1;
 		getidmaps();
 		processquery(query1,query2);
 		graph.getconnections();
@@ -316,7 +317,8 @@ public class YenShortestPaths implements Comparator<Node>{
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		try {
-			YenShortestPaths x = new YenShortestPaths("fat","guy");
+			GraphDB graph = new GraphDB(2);
+			YenShortestPaths x = new YenShortestPaths("fat","guy", graph);
 		} catch(Exception e) {
 			e.printStackTrace();
 		} 

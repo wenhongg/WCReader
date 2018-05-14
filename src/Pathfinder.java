@@ -4,6 +4,7 @@
  * 
  * In my opinion, given that most links in the webchild graph are 1 and a tiny portion is slightly above 1,
  * I think this could be a more efficient function for getting multiple, useful links than other algorithms.
+ * Pathfinder ignores the weights (takes them ALL to be 1).
  * 
  * WC files must have been processed by ReadCSV and Grapher.
  * 
@@ -30,7 +31,6 @@ public class Pathfinder {
 	LinkedList<Integer> visitrs = new LinkedList<Integer>();
 	LinkedList<Double> visitweight = new LinkedList<Double>();
 	
-
 	LinkedList<String> pathlist = new LinkedList<String>();
 	
 	Scanner scan1,scan2;
@@ -41,38 +41,30 @@ public class Pathfinder {
 	int q1id,q2id;
 	GraphDB graph;
 	
-	public Pathfinder(String query1, String query2) throws IOException {
+	public Pathfinder(String query1, String query2, GraphDB graph1) throws IOException {
+		// Below lines are standard format for checking the query and visualizing the graph.
 		objmap = new HashMap<Integer,String>();
 		rsmap = new HashMap<Integer,String>();
+		q1 = query1;
+		q2 = query2;
+				
+		graph = graph1;
+		getidmaps();
+		processquery(query1,query2);
+		graph.getconnections();
+		//
 		answers = new LinkedList<String>();
 		
-		processquery(query1,query2);
-		graph = new GraphDB(109842);
-		getidmaps();
+		visited.add(q1id);
 		searcher();
 		
-		System.out.println(pathlist.size()/3 + " links found.");
+		System.out.println(pathlist.size()/3 + " links found between " + q1id + " and " + q2id + "."  );
 		decode();
 	}
 	
 	public void getidmaps() throws IOException {
-		scan1 = new Scanner(new File("objectids.csv"));
-		scan1.useDelimiter("\\r?\\\n");
-		while(scan1.hasNext()) {
-			String str = scan1.next();
-			String[] arr = str.split(",");
-			objmap.put(Integer.parseInt(arr[1]), arr[0]);
-		}
-		System.out.println(objmap.size() + " objects.");
-		
-		scan2 = new Scanner(new File("relationids.csv"));
-		scan2.useDelimiter("\\r?\\\n");
-		while(scan2.hasNext()) {
-			String str = scan2.next();
-			String[] arr = str.split(",");
-			rsmap.put(Integer.parseInt(arr[1]), arr[0]);
-		}
-		System.out.println(rsmap.size() + " unique relations.");
+		objmap = graph.objmap;
+		rsmap = graph.rsmap;
 	} 
 	
 	
@@ -111,7 +103,7 @@ public class Pathfinder {
 	
 	public void searcher() throws IOException{
 
-		visited.add(q1id);
+		
 		int counter = 0;
 		List<String[]> neighbours = search(visited.getLast());
 		for (String[] a : neighbours) {
@@ -170,7 +162,7 @@ public class Pathfinder {
                 break;
             } else {
             	// Proceed down the trail to find the destination.
-            	if(visited.size()>1) {
+            	if(visited.size()>2) {
             		continue;
             	}
             	 visited.addLast(Integer.parseInt(a[0]));
@@ -219,7 +211,8 @@ public class Pathfinder {
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		try {
-		new Pathfinder("bicycle","foot");
+			GraphDB graph = new GraphDB(2);
+			new Pathfinder("fat","guy", graph);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

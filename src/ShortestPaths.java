@@ -27,16 +27,18 @@ public class ShortestPaths implements Comparator<Node>{
 	String q1,q2;
 	int q1id,q2id;
 	GraphDB graph;
-	public ShortestPaths(String query1, String query2) throws IOException {
+	public ShortestPaths(String query1, String query2, GraphDB graph1) throws IOException {
+		// Below lines are standard format for checking the query and visualizing the graph.
 		objmap = new HashMap<Integer,String>();
 		rsmap = new HashMap<Integer,String>();
 		q1 = query1;
 		q2 = query2;
 		
+		graph = graph1;
 		getidmaps();
 		processquery(query1,query2);
-		graph = new GraphDB(109842);
-		
+		graph.getconnections();
+		//
 		obtainpaths(1);
 
 		decode();
@@ -63,23 +65,8 @@ public class ShortestPaths implements Comparator<Node>{
 	}
 	
 	public void getidmaps() throws IOException {
-		scan1 = new Scanner(new File("objectids.csv"));
-		scan1.useDelimiter("\\r?\\\n");
-		while(scan1.hasNext()) {
-			String str = scan1.next();
-			String[] arr = str.split(",");
-			objmap.put(Integer.parseInt(arr[1]), arr[0]);
-		}
-		System.out.println(objmap.size() + " objects.");
-		
-		scan2 = new Scanner(new File("relationids.csv"));
-		scan2.useDelimiter("\\r?\\\n");
-		while(scan2.hasNext()) {
-			String str = scan2.next();
-			String[] arr = str.split(",");
-			rsmap.put(Integer.parseInt(arr[1]), arr[0]);
-		}
-		System.out.println(rsmap.size() + " unique relations.");
+		objmap = graph.objmap;
+		rsmap = graph.rsmap;
 	} 
 	
 	public void obtainpaths(int count) {
@@ -191,7 +178,8 @@ public class ShortestPaths implements Comparator<Node>{
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		try {
-			new ShortestPaths("milk","cell");
+			GraphDB graph = new GraphDB(2);
+			new ShortestPaths("milk","cell", graph);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

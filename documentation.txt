@@ -13,3 +13,5 @@ FINAL OUTPUT IS: objectids2.csv, relationids2.csv (from ReadCSVTwo) and connecti
 
 GraphDB has to produce rsmap and objmap first, check if query exists, then produce connections.
 (Follow YenShortestPaths sample)
+
+connections .CSV follows the format: object1 ID, object2 ID, relationship ID, weight

@@ -23,28 +23,26 @@ public class GraphDB {
 	public GraphDB(int data) throws IOException {
 		objmap = new HashMap<Integer,String>();
 		rsmap = new HashMap<Integer,String>();
-		int nodes1 = 109842;
 		System.out.println("Producing graph.");
-		nodes = new Node[nodes1];
 		
-		for(int i=0; i<nodes1; i+=1) {
-			nodes[i] = new Node(i);
-		}
+		
 		
 		if(data == 1) {
-			connection = "may/connections1.csv";
-			relationid = "may/relationids1.csv";
-			objectid = "may/objectids1.csv";
+			connection = "datasets/connections1.csv";
+			relationid = "datasets/relationids1.csv";
+			objectid = "datasets/objectids1.csv";
 			
 		} else if(data == 2) {
-			connection = "may/connections2.csv";
-			relationid = "may/relationids2.csv";
-			objectid = "may/objectids2.csv";
+			connection = "datasets/connections2.csv";
+			relationid = "datasets/relationids2.csv";
+			objectid = "datasets/objectids2.csv";
 		} else {
 			System.out.println("Dataset chosen must be either 1 or 2.");
 			System.exit(0);
 		}
 		getidmaps();
+		
+		
 	}
 	
 	public void getidmaps() throws IOException {
@@ -66,6 +64,10 @@ public class GraphDB {
 		}
 		System.out.println(rsmap.size() + " unique relations.");
 
+		nodes = new Node[objmap.size()+1];
+		for(int i=0; i<objmap.size()+1; i+=1) {
+			nodes[i] = new Node(i);
+		}
 	}
 	
 	public void getconnections() throws IOException {
@@ -92,6 +94,7 @@ public class GraphDB {
 			String[] first = {arr[1],arr[2],Double.toString((1/Double.parseDouble(arr[3])))};
 			String reverse = "-" + arr[2];
 			String[] second = {arr[0],reverse,Double.toString((1/Double.parseDouble(arr[3])))};
+
 			nodes[a].relations.add(first);
 			nodes[b].relations.add(second);
 			count +=1;
