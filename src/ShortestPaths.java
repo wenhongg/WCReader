@@ -37,13 +37,28 @@ public class ShortestPaths implements Comparator<Node>{
 		graph = graph1;
 		getidmaps();
 		processquery(query1,query2);
-		graph.getconnections();
 		//
-		obtainpaths(1);
+		
 
 		decode();
 		System.out.println("ShortestPaths ended.");
 	}
+	
+	public ShortestPaths(GraphDB graph1) throws IOException {
+		// Below lines are standard format for checking the query and visualizing the graph.
+		objmap = new HashMap<Integer,String>();
+		rsmap = new HashMap<Integer,String>();
+		
+		graph = graph1;
+		getidmaps();
+		System.out.println("Shortest path finder produced.");
+		//obtainpaths();
+		//
+		//decode();
+		//System.out.println("ShortestPaths ended.");
+	}
+	
+	
 	
 	public void processquery(String query1, String query2) throws IOException {
 		q1 = query1;
@@ -69,7 +84,14 @@ public class ShortestPaths implements Comparator<Node>{
 		rsmap = graph.rsmap;
 	} 
 	
-	public void obtainpaths(int count) {
+	public void obtainpaths(int one, int two) {
+		q1id = one;
+		q2id = two;
+		
+		obtainpaths();
+	}
+	
+	public void obtainpaths() {
 		// djikstra's implementation (with PQ)
 
 		pq = new PriorityQueue<Node>(this);
@@ -142,6 +164,51 @@ public class ShortestPaths implements Comparator<Node>{
 	
 	}
 	
+	public Map<String, Object> decodem() {
+		// Make JSON FILE: TO DO ON 15 MARCH 
+		
+		List<String> data = pathlist;
+		Iterator<String> iter = data.iterator();
+			String str = iter.next();
+			String str1 = iter.next();
+			String str2 = iter.next();
+			String[] nodes = str.split(",");
+			String[] nodes1 = str1.split(",");
+			String[] nodes2 = str2.split(",");
+			
+			double score=0;
+			for(String x : nodes2) {
+				score +=Double.parseDouble(x);
+			}
+			
+			String[][] path = new String[nodes1.length][5]; 
+			
+			for(int i=0; i<nodes1.length;i+=1) {
+				String first = objmap.get(Integer.parseInt(nodes[i]));
+				String second = objmap.get(Integer.parseInt(nodes[i+1]));
+				
+				if(Integer.parseInt(nodes1[i]) < 0) {
+					String rs = rsmap.get(-Integer.parseInt(nodes1[i]));
+					String[] link = {nodes[i+1] , second , rs, nodes[i] , first};
+					path[i] = link;
+				} else {
+					String rs = rsmap.get(Integer.parseInt(nodes1[i]));
+					String[] link = {nodes[i] , first , rs, nodes[i+1] , second};
+					path[i] = link;
+				}
+			}
+			String[] query = {Integer.toString(q1id), graph.objmap.get(q1id), Integer.toString(q2id), graph.objmap.get(q2id)}; 
+			Map<String, Object> onepath = new HashMap<String,Object>();
+			onepath.put("path", path);
+			onepath.put("score", score);
+			onepath.put("query", query);
+			
+			
+		
+		reset();
+		return onepath;
+	}
+	
 	public void decode() throws IOException {
 		List<String> data = pathlist;
 		Iterator<String> iter = data.iterator();
@@ -169,6 +236,18 @@ public class ShortestPaths implements Comparator<Node>{
 			System.out.println(sentence);
 			
 		}
+		pathlist.clear();
+		reset();
+	}
+	
+	public void reset() {
+		for(Node x : graph.nodes) {
+			x.dist = Double.POSITIVE_INFINITY;
+			x.bestlink = -1;
+			x.bestparent = -1;
+			x.bestweight = -1;
+			x.visited = false;
+		}
 	}
 	
 	public int compare(Node x, Node y) {
@@ -179,7 +258,9 @@ public class ShortestPaths implements Comparator<Node>{
 		long startTime = System.currentTimeMillis();
 		try {
 			GraphDB graph = new GraphDB(2);
-			new ShortestPaths("milk","cell", graph);
+			ShortestPaths findpath = new ShortestPaths("milk","cell", graph);
+			graph.getconnections();
+			findpath.obtainpaths();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

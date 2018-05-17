@@ -38,11 +38,12 @@ public class Pathfinder {
 	Map<Integer,String> objmap,rsmap;
 	
 	String q1,q2;
-	int q1id,q2id;
+	int q1id,q2id, link;
 	GraphDB graph;
 	
-	public Pathfinder(String query1, String query2, GraphDB graph1) throws IOException {
+	public Pathfinder(String query1, String query2, GraphDB graph1, int maxlinks) throws IOException {
 		// Below lines are standard format for checking the query and visualizing the graph.
+		link = maxlinks;
 		objmap = new HashMap<Integer,String>();
 		rsmap = new HashMap<Integer,String>();
 		q1 = query1;
@@ -162,7 +163,7 @@ public class Pathfinder {
                 break;
             } else {
             	// Proceed down the trail to find the destination.
-            	if(visited.size()>2) {
+            	if(visited.size()>link-1) {
             		continue;
             	}
             	 visited.addLast(Integer.parseInt(a[0]));
@@ -212,7 +213,7 @@ public class Pathfinder {
 		long startTime = System.currentTimeMillis();
 		try {
 			GraphDB graph = new GraphDB(2);
-			new Pathfinder("fat","guy", graph);
+			new Pathfinder("fat","guy", graph, 2);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

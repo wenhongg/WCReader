@@ -5,9 +5,11 @@
  */
 
 import java.util.List;
+
 import java.util.Map;
 import java.io.*;
 import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.HashMap;
@@ -20,7 +22,9 @@ public class GraphDB {
 	Node[] nodes;
 	Scanner scanner;
 	String objectid, relationid, connection;
+	int dataset;
 	public GraphDB(int data) throws IOException {
+		dataset =data;
 		objmap = new HashMap<Integer,String>();
 		rsmap = new HashMap<Integer,String>();
 		System.out.println("Producing graph.");
@@ -70,6 +74,75 @@ public class GraphDB {
 		}
 	}
 	
+	public List<Integer> processquery(List<String> list) {
+		// This processquery is for the 3 way search. It will just return only 1 ID per search.
+		List<String> queries = list;
+		List<Integer> answers = new ArrayList<Integer>();
+		if(dataset == 2) {
+			for(Map.Entry<Integer,String> entry: objmap.entrySet()) {
+				if(queries.contains(entry.getValue())) {
+					queries.remove(entry.getValue());
+					answers.add(entry.getKey());
+				} 
+			}
+		} else {
+			for(Map.Entry<Integer,String> entry: objmap.entrySet()) {
+				String x = entry.getValue();
+				String actual = x.split("#")[0];
+				if(queries.contains(actual)) {
+					queries.remove(actual);
+					answers.add(entry.getKey());
+				}
+		}
+		if(queries.size()!=0) {
+			System.out.println("Query not found.");
+			System.exit(0);
+			}
+		
+		}
+		return answers;
+	}
+	
+	public Map<Integer,List<Integer>> processquery(String query1, String query2) throws IOException, InterruptedException {
+		List<Integer> q1ids = new LinkedList<Integer>();
+		List<Integer> q2ids = new LinkedList<Integer>();
+		
+		if(dataset == 2) {
+			for(Map.Entry<Integer,String> entry: objmap.entrySet()) {
+				if(query1.equals(entry.getValue())) {
+					q1ids.add(entry.getKey());
+				} 
+				if(query2.equals(entry.getValue())) {
+					q2ids.add(entry.getKey());
+				} 
+			}
+			
+		} else {
+			for(Map.Entry<Integer,String> entry: objmap.entrySet()) {
+				String x = entry.getValue();
+				String actual = x.split("#")[0];
+				if(query1.equals(actual)) {
+					q1ids.add(entry.getKey());
+				} 
+				if(query2.equals(actual)) {
+					q2ids.add(entry.getKey());
+				} 
+			}
+		}
+		
+		if(q1ids.size() == 0 || q2ids.size()==0) {
+			System.out.println("Query not found.");
+			System.exit(0);
+		}
+		Map<Integer,List<Integer>> answer = new HashMap<Integer,List<Integer>>();
+		answer.put(1, q1ids);
+		answer.put(2, q2ids);
+		return answer;	
+		
+		
+		// Program will not run unless queries are checked to be valid.
+	}
+	
 	public void getconnections() throws IOException {
 		scanner = new Scanner(new File(connection));
 		scanner.useDelimiter("\\r?\\\n");
@@ -98,7 +171,7 @@ public class GraphDB {
 			nodes[a].relations.add(first);
 			nodes[b].relations.add(second);
 			count +=1;
-			System.out.println(count + "relationship parsed.");
+			System.out.println(count + " relationships parsed.");
 		
 		}
 	}
@@ -125,7 +198,6 @@ public class GraphDB {
 		System.out.println("Max connections: " + max);
 		System.out.println("Min connections: " + min);
 	}
-	
 	
 	
 	
