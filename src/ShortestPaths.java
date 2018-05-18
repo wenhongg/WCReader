@@ -6,6 +6,7 @@
  * 
  */
 import java.io.File;
+
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -206,6 +207,7 @@ public class ShortestPaths implements Comparator<Node>{
 			
 		
 		reset();
+		pathlist.clear();
 		return onepath;
 	}
 	

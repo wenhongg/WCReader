@@ -11,9 +11,11 @@
 
 import java.io.BufferedWriter;
 
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.PriorityQueue;
@@ -37,22 +39,21 @@ public class YenShortestPaths implements Comparator<Node>{
 	List<String> container;
 	String q1,q2;
 	int q1id,q2id, countx;
-	List<Integer> q1ids,q2ids;
-	GraphDB graph;
-	Map<Integer,List<Integer>> ids;
 	
-	public YenShortestPaths(String query1, String query2, GraphDB graph1, int count) throws IOException, InterruptedException {
+	List<Integer> idslist;
+	GraphDB graph;
+	
+	public YenShortestPaths(GraphDB graph1, int count) {
 		
 		countx = count;
 		answers = new LinkedList<String>();
 		container = new LinkedList<String>();
-		q1 = query1;
-		q2 = query2;
-		q1ids = new LinkedList<Integer>();
-		q2ids = new LinkedList<Integer>();
+		
+		
 		graph = graph1;
 		getidmaps();
-		ids = graph.processquery(query1, query2);
+		
+		
 		
 		//handler(count);
 		
@@ -60,10 +61,23 @@ public class YenShortestPaths implements Comparator<Node>{
 		System.out.println("YenShortestPaths ended.");
 	}
 	
-	public void findpaths() throws IOException {
-		List<Integer> oneids = ids.get(1);
-		List<Integer> twoids = ids.get(2);
-		List<Map<String,Object>> permutations = new LinkedList<Map<String,Object>>();
+	public List<String> findpaths(String query1, String query2){
+		List<String> querylist = new ArrayList<String>();
+		querylist.add(query1);
+		querylist.add(query2);
+		idslist = graph.process(querylist);
+		if(idslist.size()!= 2) {
+			System.out.println("Something went wrong. Size is " + idslist.size());
+			List<String> failresponse = new ArrayList<String>();
+			failresponse.add("One or more query was not found.");
+			return failresponse;
+		}
+		q1id = idslist.get(0);
+		q2id = idslist.get(1);
+		handler(countx);
+		List<String> answer = decode();
+		return answer;
+		/*
 		for(int x : oneids) {
 			for(int y : twoids) {
 				q1id = x;
@@ -72,10 +86,11 @@ public class YenShortestPaths implements Comparator<Node>{
 				System.out.println("Beginning cycle");
 				permutations.add(makejson());
 				System.out.println("Set complete.");
-				pathlist = new LinkedList<String>();
-				container = new LinkedList<String>();
+				pathlist.clear();
+				container.clear();
 			}
 		}
+		
 		Map<String, Object> finalanswer = new HashMap<String,Object>();
 		finalanswer.put("permutations", permutations);
 		String[] query = {q1,q2};
@@ -88,6 +103,16 @@ public class YenShortestPaths implements Comparator<Node>{
 	    bw.write(gson.toJson(finalanswer));
 		bw.flush();
 		bw.close();
+		*/
+	}
+	
+	public void masterreset() {
+		pathlist.clear();
+		container.clear();
+		reset();
+		System.out.println("Master reset.");
+		int q1id = -1;
+		int q2id = -1;
 	}
 	
 	public void getidmaps() {
@@ -95,7 +120,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		objmap = graph.objmap;
 	}
 	
-	public void handler(int k) throws IOException {
+	public void handler(int k) {
 		int[] not = new int[0];
 		if(container.size()==0) {
 			
@@ -372,7 +397,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		return toplvl;
 	}
 	
-	public void decode() throws IOException {
+	public List<String> decode() {
 		List<String> data = container;
 		Iterator<String> iter = data.iterator();
 		while(iter.hasNext()) {
@@ -404,6 +429,7 @@ public class YenShortestPaths implements Comparator<Node>{
 			//System.out.println(sentence);
 			answers.add(sentence);
 		}
+		return answers;
 	}
 	
 	public int compare(Node x, Node y) {
@@ -414,9 +440,10 @@ public class YenShortestPaths implements Comparator<Node>{
 		long startTime = System.currentTimeMillis();
 		try {
 			GraphDB graph = new GraphDB(1);
-			YenShortestPaths pathfinding = new YenShortestPaths("pot","cell", graph, 5);
+			YenShortestPaths pathfinding = new YenShortestPaths(graph, 5);
+			
 			graph.getconnections();
-			pathfinding.findpaths();
+			pathfinding.findpaths("man","cell");
 			System.out.println("Program ended.");
 		} catch(Exception e) {
 			e.printStackTrace();

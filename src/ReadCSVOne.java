@@ -22,8 +22,8 @@ public class ReadCSVOne {
     	bw = new BufferedWriter(file);
 		netcount = 0;
 
-		readData("wc/comparative-cw0912.txt",1,3,6, true);
-		readData("wc/property.txt",0,1,2, false);
+		readData("wc/comparative-cw0912.txt",0,3,5, true);
+		readData("wc/property.txt",3,1,4, false);
 		readspatial("wc/spatial.txt", 0,2,1,true);
 		
 		System.out.println(netcount + " entries in total.");
@@ -55,7 +55,7 @@ public class ReadCSVOne {
 			String[] deets = values[rs].split(",");
 			for(String str: deets) {
 				String[] str1 = str.split(" :");
-				bw.write(values[first] + "," + str1[0] + "," + values[last] + "," + 1 + "\n");
+				bw.write(values[first].split("#")[0] + "," + str1[0] + "," + values[last].split("#")[0] + "," + 1 + "\n");
 				counter +=1;
 			}
 
@@ -96,7 +96,7 @@ public class ReadCSVOne {
 			String[] values = line.split("\t");
 			
 			// Write each CSV line:
-			String output = values[first] + "," + values[rs] + "," + values[last] + "," + 1 +  "\n";
+			String output = values[first] + "," + values[rs].split("#")[0] + "," + values[last] + "," + 1 +  "\n";
 			bw.write(output);
 
 			System.out.println("Parsed entry " + counter + ".");

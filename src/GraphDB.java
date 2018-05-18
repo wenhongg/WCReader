@@ -3,8 +3,11 @@
  * GraphDB class is used for SET 2
  * GraphDB is called upon by other classes such as Pathfinder, ShortestPaths and YenShortestPaths 
  */
+import java.util.PriorityQueue;
+import java.util.Comparator;
 
 import java.util.List;
+
 
 import java.util.Map;
 import java.io.*;
@@ -16,7 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 	
 // In the full graph, 109841 objects are expected.
-public class GraphDB {
+public class GraphDB implements Comparator<Node> {
 	Scanner scan1,scan2;
 	Map<Integer,String> objmap,rsmap;
 	Node[] nodes;
@@ -68,8 +71,8 @@ public class GraphDB {
 		}
 		System.out.println(rsmap.size() + " unique relations.");
 
-		nodes = new Node[objmap.size()+1];
-		for(int i=0; i<objmap.size()+1; i+=1) {
+		nodes = new Node[objmap.size()+1000]; // 1000 is arbitrary spare capacity to store additional nodes. 
+		for(int i=0; i<nodes.length; i+=1) {
 			nodes[i] = new Node(i);
 		}
 	}
@@ -103,7 +106,53 @@ public class GraphDB {
 		return answers;
 	}
 	
-	public Map<Integer,List<Integer>> processquery(String query1, String query2) throws IOException, InterruptedException {
+	public List<Integer> process(List<String> queries) {
+		List<Integer> answer = new ArrayList<Integer>();
+		rsmap.put(0, "can be");
+		for(String query : queries) {
+			List<Integer> related = new ArrayList<Integer>();
+			boolean mainqueryexists = false;
+			int quer = -1;
+			for(Map.Entry<Integer,String> entry: objmap.entrySet()) {
+				if(query.equals(entry.getValue()) && !mainqueryexists) {
+					// Check if node exists.
+					answer.add(entry.getKey());
+					mainqueryexists = true;
+					quer = entry.getKey();
+					continue;
+				} 
+				boolean exist = false;
+				// This is the method of selection of related words: can change this as required.
+				String[] tokens = entry.getValue().split(" ");
+				for(String x : tokens) {
+					if(x.equals(query)) {
+						exist = true;
+					} 
+				}
+				if(exist) {
+					related.add(entry.getKey());
+				}
+			}
+			if(!mainqueryexists && related.size()!=0) {
+				// Create node
+				objmap.put(objmap.size()+1 , query);
+				quer = objmap.size();
+				answer.add(quer);
+			}
+			for(int x : related) {
+				// Create the branching links.
+				String[] strx = { Integer.toString(x) , "0", "0"};
+				nodes[quer].relations.add(strx);
+				String[] stry = { Integer.toString(quer) , "0" , "0" };
+				nodes[x].relations.add(stry);
+			}
+		}
+		return answer;
+	}
+	
+	
+	
+	public Map<Integer,List<Integer>> processquery(String query1, String query2) {
 		List<Integer> q1ids = new LinkedList<Integer>();
 		List<Integer> q2ids = new LinkedList<Integer>();
 		
@@ -176,13 +225,19 @@ public class GraphDB {
 		}
 	}
 	
+	public int compare(Node x, Node y) {
+		return (int) Math.round(y.relations.size()-x.relations.size());
+	}
+	
 	public void graphstats() {
 		// Created this method just to get a feel of what the graph is like
 		// Returns average connections in all the graph's nodes and the maximum&minimum number of connections to any node.
+		PriorityQueue<Node> pq = new PriorityQueue<Node>(this);
 		double count = 0;
 		long max = 0;
 		long min = nodes.length;
 		for(Node a : nodes) {
+			pq.add(a);
 			if(a.relations.size() ==0) {
 				continue;
 			}
@@ -197,9 +252,29 @@ public class GraphDB {
 		System.out.println("Average connections: " + count/nodes.length);
 		System.out.println("Max connections: " + max);
 		System.out.println("Min connections: " + min);
+		count = 0;
+		while(count<500) {
+			count +=1;
+			Node x = pq.poll();
+			System.out.println(objmap.get(x.id) + " - " + x.relations.size());
+			
+		}
 	}
 	
-	
+	public static void main(String[] args) {
+		try {
+			GraphDB graph = new GraphDB(1);
+			if(graph.objmap.containsValue("")) {
+				System.out.println("Yes");
+			} else {
+				System.out.println("No");
+			}
+			//graph.getconnections();
+			//graph.graphstats();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	
 }
