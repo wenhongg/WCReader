@@ -20,6 +20,7 @@ import java.util.HashSet;
 	
 // In the full graph, 109841 objects are expected.
 public class GraphDB implements Comparator<Node> {
+	List<Integer> answer;
 	Scanner scan1,scan2;
 	Map<Integer,String> objmap,rsmap;
 	Node[] nodes;
@@ -28,6 +29,7 @@ public class GraphDB implements Comparator<Node> {
 	int dataset;
 	public GraphDB(int data) throws IOException {
 		dataset =data;
+		answer = new ArrayList<Integer>();
 		objmap = new HashMap<Integer,String>();
 		rsmap = new HashMap<Integer,String>();
 		System.out.println("Producing graph.");
@@ -106,8 +108,54 @@ public class GraphDB implements Comparator<Node> {
 		return answers;
 	}
 	
+	public void reset() {
+		// remove 0 weighted nodes
+		List<Integer> delete = new ArrayList<Integer>();
+		List<String[]> toremove = new ArrayList<String[]>();
+		for(String[] x : nodes[answer.get(0)].relations) {
+			if(x[1].equals("0")) {
+				delete.add(Integer.parseInt(x[0]));
+				toremove.add(x);
+			}
+		}
+		nodes[answer.get(0)].relations.removeAll(toremove);
+		toremove.clear();
+		for(int x: delete) {
+			String[] temp = null;
+			for(String[] str : nodes[x].relations) {
+				if(str[1].equals("0")) {
+					temp = str;
+					break;
+				}
+			}
+			nodes[x].relations.remove(temp);
+		}
+		delete.clear();
+		// Repeat for second node
+		for(String[] x : nodes[answer.get(1)].relations) {
+			if(x[1].equals("0")) {
+				delete.add(Integer.parseInt(x[0]));
+				toremove.add(x);
+			}
+		}
+		nodes[answer.get(1)].relations.removeAll(toremove);
+		toremove.clear();
+		for(int x: delete) {
+			String[] temp = null;
+			for(String[] str : nodes[x].relations) {
+				if(str[1].equals("0")) {
+					temp = str;
+					break;
+				}
+			}
+			nodes[x].relations.remove(temp);
+		}
+		delete.clear();
+		answer.clear();
+	}
+	
 	public List<Integer> process(List<String> queries) {
-		List<Integer> answer = new ArrayList<Integer>();
+		
 		rsmap.put(0, "can be");
 		for(String query : queries) {
 			List<Integer> related = new ArrayList<Integer>();
@@ -210,9 +258,9 @@ public class GraphDB implements Comparator<Node> {
 				
 
 			int b = Integer.parseInt(arr[1]);
-			if(a>109841 || b>109841) {
+			/*if(a>109841 || b>109841) {
 				System.out.println("Error caught.");
-			}
+			}*/
 			String[] first = {arr[1],arr[2],Double.toString((1/Double.parseDouble(arr[3])))};
 			String reverse = "-" + arr[2];
 			String[] second = {arr[0],reverse,Double.toString((1/Double.parseDouble(arr[3])))};
@@ -222,6 +270,14 @@ public class GraphDB implements Comparator<Node> {
 			count +=1;
 			System.out.println(count + " relationships parsed.");
 		
+		}
+		if(dataset == 2) {
+			for(Map.Entry<Integer, String> entry : objmap.entrySet()) {
+				if(entry.getValue().equals("section") || entry.getValue().equals("part")) {
+					nodes[entry.getKey()].relations.clear();
+					System.out.println("Cleared node :" + entry.getValue());
+				}
+			}
 		}
 	}
 	

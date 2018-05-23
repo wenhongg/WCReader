@@ -62,6 +62,8 @@ public class YenShortestPaths implements Comparator<Node>{
 	}
 	
 	public List<String> findpaths(String query1, String query2){
+		q1 = query1;
+		q2 = query2;
 		List<String> querylist = new ArrayList<String>();
 		querylist.add(query1);
 		querylist.add(query2);
@@ -75,8 +77,11 @@ public class YenShortestPaths implements Comparator<Node>{
 		q1id = idslist.get(0);
 		q2id = idslist.get(1);
 		handler(countx);
-		List<String> answer = decode();
-		return answer;
+		List<String> answerx = decode();
+		makejson();
+		masterreset();
+		graph.reset();
+		return answerx;
 		/*
 		for(int x : oneids) {
 			for(int y : twoids) {
@@ -164,7 +169,7 @@ public class YenShortestPaths implements Comparator<Node>{
 					for(int c=0;c<arrx.length;c+=1) {
 						if(arrx[c].equals(spur)) {
 							for(int a=0; a< graph.nodes[Integer.parseInt(arrx[c])].relations.size(); a+=1) {
-								System.out.println("Scanning for link to remove" + a);
+								//System.out.println("Scanning for link to remove" + a);
 								if(graph.nodes[Integer.parseInt(arrx[c])].relations.get(a)[0].equals(arrx[c+1].toString())) {
 									graph.nodes[Integer.parseInt(arr[c])].removed.add(graph.nodes[Integer.parseInt(arrx[c])].relations.remove(a));
 									System.out.println("Link removed");
@@ -173,7 +178,7 @@ public class YenShortestPaths implements Comparator<Node>{
 							}
 							
 							for(int a=0; a< graph.nodes[Integer.parseInt(arrx[c+1])].relations.size(); a+=1) {
-								System.out.println("Scanning for link to remove" + a);
+								//System.out.println("Scanning for link to remove" + a);
 								if(graph.nodes[Integer.parseInt(arrx[c+1])].relations.get(a)[0].equals(arrx[c].toString())) {
 									graph.nodes[Integer.parseInt(arrx[c+1])].removed.add(graph.nodes[Integer.parseInt(arrx[c+1])].relations.remove(a));
 									//System.out.println("Link removed");
@@ -310,6 +315,7 @@ public class YenShortestPaths implements Comparator<Node>{
 			x.bestweight = -1;
 			x.visited = false;
 		}
+		
 	}
 	
 	public void move(int[] not) {
@@ -394,7 +400,23 @@ public class YenShortestPaths implements Comparator<Node>{
 		toplvl.put("query", query);
 		toplvl.put("paths", listofpaths);
 		
-		return toplvl;
+		
+		
+		String dest = "results/" +q1+ "_" +q2 +".json";
+		System.out.println("Writing to json.");
+		
+		try {
+		Gson gson = new GsonBuilder().create();
+		FileWriter file = new FileWriter(dest);
+	    BufferedWriter bw = new BufferedWriter(file);
+	    bw.write(gson.toJson(toplvl));
+		bw.flush();
+		bw.close();
+		} catch(Exception e) {
+			e.printStackTrace();
+		} finally {
+			return toplvl;
+		}
 	}
 	
 	public List<String> decode() {
