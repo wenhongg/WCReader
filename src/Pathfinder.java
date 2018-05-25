@@ -12,6 +12,9 @@
 
 import java.util.Scanner;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.util.Iterator;
 
 import java.io.*;
@@ -19,6 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 // Connections: Object1, Object2, Link, Score
 // 
@@ -32,7 +38,8 @@ public class Pathfinder {
 	LinkedList<Double> visitweight = new LinkedList<Double>();
 	
 	LinkedList<String> pathlist = new LinkedList<String>();
-	
+	Set<String> queries = new HashSet<String>();
+	List<Integer> idslist;
 	Scanner scan1,scan2;
 	List<String> answers;
 	Map<Integer,String> objmap,rsmap;
@@ -41,26 +48,25 @@ public class Pathfinder {
 	int q1id,q2id, link;
 	GraphDB graph;
 	
-	public Pathfinder(String query1, String query2, GraphDB graph1, int maxlinks) throws IOException {
+	public Pathfinder(GraphDB graph1, int maxlinks) throws IOException {
 		// Below lines are standard format for checking the query and visualizing the graph.
 		link = maxlinks;
 		objmap = new HashMap<Integer,String>();
 		rsmap = new HashMap<Integer,String>();
-		q1 = query1;
-		q2 = query2;
 				
 		graph = graph1;
 		getidmaps();
-		processquery(query1,query2);
-		graph.getconnections();
 		//
 		answers = new LinkedList<String>();
 		
 		visited.add(q1id);
-		searcher();
 		
-		System.out.println(pathlist.size()/3 + " links found between " + q1id + " and " + q2id + "."  );
-		decode();
+		
+		
+	}
+	
+	public void reset() {
+		graph.reset();
 	}
 	
 	public void getidmaps() throws IOException {
@@ -70,9 +76,18 @@ public class Pathfinder {
 	
 	
 	public void processquery(String query1, String query2) throws IOException {
+		queries.add(query1);
+		queries.add(query2);
 		q1 = query1;
 		q2 = query2;
 		
+		idslist = graph.process(queries);
+		if(idslist.size()!= 2) {
+			System.out.println("Something went wrong. Size is " + idslist.size());
+			System.out.println("One or more query was not found. Try something else");
+		}
+		q1id = idslist.get(0);
+		q2id = idslist.get(1);
 		for(Map.Entry<Integer,String> entry: objmap.entrySet()) {
 			if(query1.equals(entry.getValue())) {
 				q1id = entry.getKey();
@@ -101,9 +116,15 @@ public class Pathfinder {
 		return mylist;
 	}
 	
+	public void findpaths() {
+		searcher();
+		makejson();
+		decode();
+		reset();
+	}
 	
-	public void searcher() throws IOException{
-
+	public void searcher(){
+		
 		
 		int counter = 0;
 		List<String[]> neighbours = search(visited.getLast());
@@ -177,9 +198,76 @@ public class Pathfinder {
             }
         }
 		
+		
 	}
 	
-	public void decode() throws IOException {
+	public Map<String, Object> makejson() {
+		// Make JSON FILE: TO DO ON 15 MARCH 
+		List<Map<String,Object>> listofpaths = new LinkedList<Map<String,Object>>();
+		
+		List<String> data = pathlist;
+		Iterator<String> iter = data.iterator();
+		while(iter.hasNext()) {
+			String str = iter.next();
+			String str1 = iter.next();
+			String str2 = iter.next();
+			String[] nodes = str.split(",");
+			String[] nodes1 = str1.split(",");
+			String[] nodes2 = str2.split(",");
+			
+			double score=0;
+			for(String x : nodes2) {
+				score +=Double.parseDouble(x);
+			}
+			
+			String[][] path = new String[nodes1.length][5]; 
+			
+			for(int i=0; i<nodes1.length;i+=1) {
+				String first = objmap.get(Integer.parseInt(nodes[i]));
+				String second = objmap.get(Integer.parseInt(nodes[i+1]));
+				
+				if(Integer.parseInt(nodes1[i]) < 0) {
+					String rs = rsmap.get(-Integer.parseInt(nodes1[i]));
+					String[] link = {nodes[i+1] , second , rs, nodes[i] , first};
+					path[i] = link;
+				} else {
+					String rs = rsmap.get(Integer.parseInt(nodes1[i]));
+					String[] link = {nodes[i] , first , rs, nodes[i+1] , second};
+					path[i] = link;
+				}
+			}
+			Map<String, Object> onepath = new HashMap<String,Object>();
+			onepath.put("path", path);
+			onepath.put("score", score);
+			listofpaths.add(onepath);
+			
+			
+		}
+		Map<String, Object> toplvl = new HashMap<String,Object>();
+		String[] query = {Integer.toString(q1id), q1, Integer.toString(q2id), q2}; 
+		toplvl.put("query", query);
+		toplvl.put("paths", listofpaths);
+		
+		
+		
+		String dest = "results/" +q1+ "_" +q2 +".json";
+		System.out.println("Writing to json.");
+		
+		try {
+		Gson gson = new GsonBuilder().create();
+		FileWriter file = new FileWriter(dest);
+	    BufferedWriter bw = new BufferedWriter(file);
+	    bw.write(gson.toJson(toplvl));
+		bw.flush();
+		bw.close();
+		} catch(Exception e) {
+			e.printStackTrace();
+		} finally {
+			return toplvl;
+		}
+	}
+	
+	public void decode() {
 		List<String> data = pathlist;
 		Iterator<String> iter = data.iterator();
 		while(iter.hasNext()) {
@@ -213,13 +301,17 @@ public class Pathfinder {
 		long startTime = System.currentTimeMillis();
 		try {
 			GraphDB graph = new GraphDB(2);
-			new Pathfinder("fat","guy", graph, 2);
+			Pathfinder finder = new Pathfinder(graph, 2);
+			finder.processquery("fat", "guy");
+			graph.getconnections();
+			finder.findpaths();
+			// Should processquery be together with findpaths? just dump findpaths under processquery.
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 		long stopTime = System.currentTimeMillis();
 	    long elapsedTime = stopTime - startTime;
-	    System.out.println(elapsedTime);
+	    System.out.println(elapsedTime + "miliseconds passed.");
 	}
 }
 // https://stackoverflow.com/questions/58306/graph-algorithm-to-find-all-connections-between-two-arbitrary-vertices

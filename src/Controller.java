@@ -26,7 +26,7 @@ public class Controller extends JFrame implements ActionListener{
 		//try { Thread.sleep(5000); }
 		//catch (InterruptedException e){}
 		try {
-		graph = new GraphDB(2);
+		graph = new GraphDB(1);
 		
 		} catch(Exception e) {
 			e.printStackTrace();

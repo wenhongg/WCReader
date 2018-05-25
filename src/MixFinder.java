@@ -7,17 +7,23 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.io.*;
-import com.google.gson.*;
+import com.google.gson.*; 
+import java.util.Comparator;
+import java.util.PriorityQueue;
 
-public class MixFinder {
+public class MixFinder implements Comparator<Map.Entry<Integer, Integer>>{
+	PriorityQueue<Map.Entry<Integer, Integer>> pq = new PriorityQueue<Map.Entry<Integer,Integer>>(this);
 	GraphDB graph;
 	Set<String> queries;
 	List<Integer> idlist;
+	Map<Integer, Integer> totallist;
 	List<Map<Integer,Integer>> distancelist;
-	int radius,common;
+	int radius,common, want;
 	boolean discovered;
-	public MixFinder(List<String> list, GraphDB graph1) throws IOException {
+	public MixFinder(Set<String> list, GraphDB graph1, int count) throws IOException {
 		// Need to make copy of list to save later
+		want = count;
+		totallist = new HashMap<Integer,Integer>();
 		queries = new HashSet<String>();
 		for(String x: list) {
 			queries.add(x);
@@ -25,8 +31,12 @@ public class MixFinder {
 		discovered = false;
 		radius = 0;
 		graph = graph1;
-		idlist = graph.processquery(list);
+		idlist = graph.process(list);
 		System.out.println(idlist.size() +" IDs obtained.");
+		if(idlist.size()!=list.size()) {
+			System.out.println(list.size()-idlist.size() + " query don't exist.");
+			System.exit(0);
+		}
 		graph.getconnections();
 		distancelist = new ArrayList<Map<Integer,Integer>>();
 		for(int x :idlist) {
@@ -36,14 +46,42 @@ public class MixFinder {
 			graph.nodes[x].visited = true;
 			graph.nodes[x].bestparent = x;
 		}
-		while(!discovered) {
+		while(totallist.size()<count) {
 			expand();
 			check();
 		}
+		for(Map.Entry<Integer, Integer> entry : totallist.entrySet()) {
+			pq.add(entry);
+		}
+		int countxxx = 0;
+		
 		linkseek();
+		graph.reset();
+		for(Map.Entry<Integer, Integer> entry: pq) {
+			countxxx +=1;
+			System.out.println("Common concept can be: " + graph.objmap.get(entry.getKey()) + " of score " + entry.getValue());
+			
+			
+		}
+		
+	}
+	public int compare(Map.Entry<Integer, Integer> a ,Map.Entry<Integer, Integer> b) {
+		return -a.getValue()+b.getValue(); 
+	}
+	
+	public void reset() {
+		for(Node x : graph.nodes) {
+			x.dist = Double.POSITIVE_INFINITY;
+			x.bestlink = -1;
+			x.bestparent = -1;
+			x.bestweight = -1;
+			x.visited = false;
+		}
+		
 	}
 	
 	public void expand() {
+		System.out.println("Expanding");
 		for(Map<Integer,Integer> map : distancelist) {
 			List<Integer> list = new ArrayList<Integer>();
 			for(Map.Entry<Integer,Integer> entry : map.entrySet()) {
@@ -75,41 +113,42 @@ public class MixFinder {
 		}
 		
 		for(int x : list) {
-			boolean comm = true;
-			boolean[] mapcheck = new boolean[idlist.size()];
-			for(boolean a : mapcheck) {
-				a = false;
-			}
+			Set<Boolean> mapcheck = new HashSet<Boolean>();
+			
 			for(int i=0; i<distancelist.size(); i+=1) {
 				if(distancelist.get(i).containsKey(x)) {
-					mapcheck[i] = true;
+					mapcheck.add(true);
+				} else {
+					mapcheck.add(false);
 				}
 			}
-			for(boolean a : mapcheck) {
-				if(a = false) {
-					comm = false;
-					break;
+			if(!mapcheck.contains(false)) {
+				if(!discovered) {
+					common = x;
 				}
-			}
-			if(comm) {
-				common = x;
 				System.out.println("Common node is found.");
 				System.out.println("Common node is " + graph.objmap.get(common));
 				int net = 0;
 				for(Map<Integer,Integer> map : distancelist) {
+					System.out.println("Map distance" + map.get(common));
 					net += map.get(common);
 				}
+				
+				totallist.put(x, net);
 				System.out.println("Net distance is " + net);
 				discovered = true;
-				break;
 			}
 		}
 	}
 	
 	public void linkseek() throws IOException {
+		for(Map.Entry<Integer, Integer> entry: pq) {
+			
+		}
 		List<Map<String,Object>> list = new ArrayList<Map<String,Object>>();
 		ShortestPaths findpaths = new ShortestPaths(graph);
 		for(int x : idlist) {
+			reset();
 			findpaths.obtainpaths(x, common);
 			Map<String,Object> map = findpaths.decodem();
 			list.add(map);
@@ -122,13 +161,15 @@ public class MixFinder {
 		String x = gson.toJson(mapp);
 		System.out.println(x);
 		
-		String dest = "";
+		
+		String dest = "results/";
 		for(String a : queries) {
 			dest += a + "_";
 		}
 		dest = dest.substring(0, dest.length() - 1);
 		dest += ".json";
-		
+
+		System.out.println("Saved to " + dest);
 		FileWriter file = new FileWriter(dest);
 	    BufferedWriter bw = new BufferedWriter(file);
 	    bw.write(x);
@@ -138,11 +179,11 @@ public class MixFinder {
 	public static void main(String[] args) {
 		try {
 			GraphDB graph = new GraphDB(2);
-			List<String> list = new ArrayList<String>();
-			list.add("cell");
-			list.add("egg");
-			list.add("man");
-			MixFinder mix = new MixFinder(list, graph);
+			Set<String> list = new HashSet<String>();
+			list.add("wheel");
+			list.add("fragment");
+			list.add("ground");
+			MixFinder mix = new MixFinder(list, graph, 5);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

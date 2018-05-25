@@ -86,6 +86,7 @@ public class ShortestPaths implements Comparator<Node>{
 	} 
 	
 	public void obtainpaths(int one, int two) {
+		System.out.println("Searching ID " + one + "," + two);
 		q1id = one;
 		q2id = two;
 		

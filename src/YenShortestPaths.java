@@ -10,6 +10,8 @@
  */
 
 import java.io.BufferedWriter;
+import java.util.Set;
+import java.util.HashSet;
 
 
 import java.io.FileWriter;
@@ -64,7 +66,7 @@ public class YenShortestPaths implements Comparator<Node>{
 	public List<String> findpaths(String query1, String query2){
 		q1 = query1;
 		q2 = query2;
-		List<String> querylist = new ArrayList<String>();
+		Set<String> querylist = new HashSet<String>();
 		querylist.add(query1);
 		querylist.add(query2);
 		idslist = graph.process(querylist);
@@ -82,33 +84,6 @@ public class YenShortestPaths implements Comparator<Node>{
 		masterreset();
 		graph.reset();
 		return answerx;
-		/*
-		for(int x : oneids) {
-			for(int y : twoids) {
-				q1id = x;
-				q2id = y;
-				handler(countx);
-				System.out.println("Beginning cycle");
-				permutations.add(makejson());
-				System.out.println("Set complete.");
-				pathlist.clear();
-				container.clear();
-			}
-		}
-		
-		Map<String, Object> finalanswer = new HashMap<String,Object>();
-		finalanswer.put("permutations", permutations);
-		String[] query = {q1,q2};
-		finalanswer.put("query", query);
-		String dest = q1+ "_" +q2 +".json";
-		System.out.println("Writing to json.");
-		Gson gson = new GsonBuilder().create();
-		FileWriter file = new FileWriter(dest);
-	    BufferedWriter bw = new BufferedWriter(file);
-	    bw.write(gson.toJson(finalanswer));
-		bw.flush();
-		bw.close();
-		*/
 	}
 	
 	public void masterreset() {
@@ -354,7 +329,7 @@ public class YenShortestPaths implements Comparator<Node>{
 	}
 	
 	public Map<String, Object> makejson() {
-		// Make JSON FILE: TO DO ON 15 MARCH 
+		// Make JSON FILE
 		List<Map<String,Object>> listofpaths = new LinkedList<Map<String,Object>>();
 		
 		List<String> data = container;
@@ -463,9 +438,8 @@ public class YenShortestPaths implements Comparator<Node>{
 		try {
 			GraphDB graph = new GraphDB(1);
 			YenShortestPaths pathfinding = new YenShortestPaths(graph, 5);
-			
 			graph.getconnections();
-			pathfinding.findpaths("man","cell");
+			pathfinding.findpaths("additive","candy");
 			System.out.println("Program ended.");
 		} catch(Exception e) {
 			e.printStackTrace();
