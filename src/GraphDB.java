@@ -1,24 +1,37 @@
-/* 
- * GraphDB class reads the file connections.csv and produces the entire graph. 
- * GraphDB class is used for SET 2
- * GraphDB is called upon by other classes such as Pathfinder, ShortestPaths and YenShortestPaths 
+/**
+ *  Produced April-May of 2018. 
+ *  
+ *  This set of graph & traversals API was created for traversing the WebChild knowledge-base, but can be applied to various graph-structure databases.
+ *  
+ *  
+ *  This is code produced by a self taught programmer who has yet to matriculate in university.
+ *  Therefore if there were things I could have done better or techniques I could have used, please let me know, thank you.
+ *  
+ *  In each class exists a main method, which gives an example of how the class can be used.
+ *  @author LAM WEN HONG 
  */
+
 import java.util.PriorityQueue;
 import java.util.Comparator;
-
 import java.util.List;
-
-
 import java.util.Map;
 import java.io.*;
-import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.HashMap;
-import java.util.HashSet;
-	
-// In the full graph, 109841 objects are expected.
+
+/**
+ * This class reads 3 documents: the object map, the relationship map and the edge list.
+ * Do look through documentation.txt for details on the format.
+ * GraphDB generates the entire graph in the RAM, and is called upon by other classes for Graph traversal.
+ * 
+ * 
+ * 
+ * @author LAM WEN HONG!
+ *
+ */
+
 public class GraphDB implements Comparator<Node> {
 	List<Integer> answer;
 	Scanner scan1,scan2;
@@ -27,7 +40,13 @@ public class GraphDB implements Comparator<Node> {
 	Scanner scanner;
 	String objectid, relationid, connection;
 	int dataset,selfcount;
-	public GraphDB(int data) throws IOException {
+	
+	
+	/**
+	 * GraphDB constructor does not load the edgelist: it only reads and produces the object map and the graph map.
+	 * @param the graph dataset to be loaded.
+	 */
+	public GraphDB(int data) {
 		selfcount = 0;
 		dataset =data;
 		answer = new ArrayList<Integer>();
@@ -35,26 +54,23 @@ public class GraphDB implements Comparator<Node> {
 		rsmap = new HashMap<Integer,String>();
 		System.out.println("Producing graph.");
 		
+		connection = "datasets/connections"+ data +".csv";
+		relationid = "datasets/relationids"+ data +".csv";
+		objectid = "datasets/objectids" + data + ".csv";
 		
-		
-		if(data == 1) {
-			connection = "datasets/connections1.csv";
-			relationid = "datasets/relationids1.csv";
-			objectid = "datasets/objectids1.csv";
-			
-		} else if(data == 2) {
-			connection = "datasets/modconnections2.csv";
-			relationid = "datasets/relationids2.csv";
-			objectid = "datasets/modobjectids2.csv";
-		} else {
-			System.out.println("Dataset chosen must be either 1 or 2.");
-			System.exit(0);
-		}
-		getidmaps();
-		
+		try {
+			getidmaps();
+		} catch(IOException e) {
+			System.out.println("Error reading from object map OR relationship map.");
+			e.printStackTrace();
+		} 
 		
 	}
 	
+	/**
+	 * Reads the object map and the relationship map.
+	 * @throws IOException if the maps do not exist.
+	 */
 	private void getidmaps() throws IOException {
 		scan1 = new Scanner(new File(objectid));
 		scan1.useDelimiter("\\r?\\\n");
@@ -80,8 +96,14 @@ public class GraphDB implements Comparator<Node> {
 		}
 	}
 	
+	/**
+	 * 
+	 * This method removes the artificial links which were generated earlier to accomodate ambiguity.
+	 * Removes the links of ID 0. 
+	 * 
+	 */
 	public void reset() {
-		// remove 0 weighted nodes
+		
 		List<Integer> delete = new ArrayList<Integer>();
 		List<String[]> toremove = new ArrayList<String[]>();
 		for(String[] x : nodes[answer.get(0)].relations) {
@@ -126,6 +148,13 @@ public class GraphDB implements Comparator<Node> {
 		answer.clear();
 	}
 	
+	/**
+	 * This method produces additional links to possible subsets of each query, if query provided is ambiguous.
+	 * @param queries the set of words to be queried.
+	 * @return list of IDs of the queries.
+	 */
+	// Note to self: inclusion of contextual knowledge can be an issue. fix asap 
+	// TODO if query string is 2 words, check using .contains . OR other method. idk
 	public List<Integer> process(Set<String> queries) {
 		
 		rsmap.put(0, "can be");
@@ -170,11 +199,14 @@ public class GraphDB implements Comparator<Node> {
 		return answer;
 	}
 	
+	/**
+	 * This method reads the edgelist and produces all the links between the nodes. 
+	 * @throws IOException if edgelist is not found or problem reading edgelist.
+	 */
 	public void getconnections() throws IOException {
 		scanner = new Scanner(new File(connection));
 		scanner.useDelimiter("\\r?\\\n");
 		int count =0;
-		int selfcount = 0;
 		while(scanner.hasNext()) {
 			String str = scanner.next();
 			String[] arr = str.split(",");
@@ -209,7 +241,10 @@ public class GraphDB implements Comparator<Node> {
 	public int compare(Node x, Node y) {
 		return (int) Math.round(y.relations.size()-x.relations.size());
 	}
-	
+	/**
+	 * This method gives some insight into the graph-data being produced. Run only after .getconnections 
+	 * 
+	 */
 	public void graphstats() {
 		// Created this method just to get a feel of what the graph is like
 		// Returns average connections in all the graph's nodes and the maximum&minimum number of connections to any node.
@@ -234,17 +269,19 @@ public class GraphDB implements Comparator<Node> {
 		System.out.println("Max connections: " + max);
 		System.out.println("Min connections: " + min);
 		count = 0;
-		while(count<500) {
+		System.out.println("10 most connected objects:");
+		while(count<10) {
 			count +=1;
 			Node x = pq.poll();
-			System.out.println(objmap.get(x.id) + " - " + x.relations.size());
+			System.out.println(objmap.get(x.id) + " has this number of connections: " + x.relations.size());
 			
 		}
 	}
 	
 	public static void main(String[] args) {
 		try {
-			// Run this as main to get a feel
+			// Run this main method to get a sense of the graph data.
+			// Two lines first load the 3 data files required and .graphstats produce in console useful information of the graph.
 			GraphDB graph = new GraphDB(1);
 			graph.getconnections();
 			graph.graphstats();

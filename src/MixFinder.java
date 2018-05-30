@@ -1,6 +1,19 @@
+/**
+ *  Produced April-May of 2018. 
+ *  
+ *  This set of graph & traversals API was created for traversing the WebChild knowledge-base, but can be applied to various graph-structure databases.
+ *  
+ *  
+ *  This is code produced by a self taught programmer who has yet to matriculate in university.
+ *  Therefore if there were things I could have done better or techniques I could have used, please let me know, thank you.
+ *  
+ *  In each class exists a main method, which gives an example of how the class can be used.
+ *  @author LAM WEN HONG
+ */
 import java.util.List;
 import java.io.FileWriter;
-
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.ArrayList;
@@ -11,8 +24,12 @@ import com.google.gson.*;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
-public class MixFinder implements Comparator<Map.Entry<Integer, Integer>>{
-	PriorityQueue<Map.Entry<Integer, Integer>> pq = new PriorityQueue<Map.Entry<Integer,Integer>>(this);
+/**
+ * This class does a multidirectional breadth first search to link more than 3 nodes.
+ * Idea here is to find some common concept which links the entities queried.
+ */
+public class MixFinder{
+	
 	GraphDB graph;
 	Set<String> queries;
 	List<Integer> idlist;
@@ -20,8 +37,22 @@ public class MixFinder implements Comparator<Map.Entry<Integer, Integer>>{
 	List<Map<Integer,Integer>> distancelist;
 	int radius,common, want;
 	boolean discovered;
-	public MixFinder(Set<String> list, GraphDB graph1, int count) throws IOException {
-		// Need to make copy of list to save later
+
+	/**
+	 * Constructor for the multi-directional breadth first searcher
+	 * @param graph1 the graph to traverse
+	 */
+	public MixFinder(GraphDB graph1) {
+		totallist = new HashMap<Integer,Integer>();
+		graph = graph1;
+	}
+	
+	/**
+	 * Traverse the graph
+	 * @param list the list of queries
+	 * @param count the number of common concepts to be returned
+	 */
+	public void traverse(Set<String> list, int count){
 		want = count;
 		totallist = new HashMap<Integer,Integer>();
 		queries = new HashSet<String>();
@@ -30,14 +61,12 @@ public class MixFinder implements Comparator<Map.Entry<Integer, Integer>>{
 		}
 		discovered = false;
 		radius = 0;
-		graph = graph1;
 		idlist = graph.process(list);
 		System.out.println(idlist.size() +" IDs obtained.");
 		if(idlist.size()!=list.size()) {
 			System.out.println(list.size()-idlist.size() + " query don't exist.");
 			System.exit(0);
 		}
-		graph.getconnections();
 		distancelist = new ArrayList<Map<Integer,Integer>>();
 		for(int x :idlist) {
 			Map<Integer,Integer> map = new HashMap<Integer,Integer>();
@@ -46,41 +75,19 @@ public class MixFinder implements Comparator<Map.Entry<Integer, Integer>>{
 			graph.nodes[x].visited = true;
 			graph.nodes[x].bestparent = x;
 		}
-		while(totallist.size()<count) {
+		int check = 0;
+		while(!discovered && check<graph.objmap.size()) {
 			expand();
 			check();
 		}
-		for(Map.Entry<Integer, Integer> entry : totallist.entrySet()) {
-			pq.add(entry);
-		}
-		int countxxx = 0;
+		
 		
 		linkseek();
 		graph.reset();
-		for(Map.Entry<Integer, Integer> entry: pq) {
-			countxxx +=1;
-			System.out.println("Common concept can be: " + graph.objmap.get(entry.getKey()) + " of score " + entry.getValue());
-			
-			
-		}
-		
-	}
-	public int compare(Map.Entry<Integer, Integer> a ,Map.Entry<Integer, Integer> b) {
-		return -a.getValue()+b.getValue(); 
-	}
-	
-	public void reset() {
-		for(Node x : graph.nodes) {
-			x.dist = Double.POSITIVE_INFINITY;
-			x.bestlink = -1;
-			x.bestparent = -1;
-			x.bestweight = -1;
-			x.visited = false;
-		}
 		
 	}
 	
-	public void expand() {
+	private void expand() {
 		System.out.println("Expanding");
 		for(Map<Integer,Integer> map : distancelist) {
 			List<Integer> list = new ArrayList<Integer>();
@@ -105,7 +112,8 @@ public class MixFinder implements Comparator<Map.Entry<Integer, Integer>>{
 		radius+=1;
 	}
 	
-	public void check() {
+	
+	private void check() {
 		Map<Integer,Integer> map1 = distancelist.get(0);
 		List<Integer> list = new ArrayList<Integer>();
 		for(Map.Entry<Integer,Integer> entry : map1.entrySet()) {
@@ -141,15 +149,12 @@ public class MixFinder implements Comparator<Map.Entry<Integer, Integer>>{
 		}
 	}
 	
-	public void linkseek() throws IOException {
-		for(Map.Entry<Integer, Integer> entry: pq) {
-			
-		}
+	private void linkseek() {
+		
 		List<Map<String,Object>> list = new ArrayList<Map<String,Object>>();
 		ShortestPaths findpaths = new ShortestPaths(graph);
 		for(int x : idlist) {
-			reset();
-			findpaths.obtainpaths(x, common);
+			findpaths.traverse(x, common);
 			Map<String,Object> map = findpaths.decodem();
 			list.add(map);
 		}
@@ -168,22 +173,34 @@ public class MixFinder implements Comparator<Map.Entry<Integer, Integer>>{
 		}
 		dest = dest.substring(0, dest.length() - 1);
 		dest += ".json";
-
+		
+		try {
+		if(!Files.isDirectory(Paths.get("results"))){
+			System.out.println("Creating RESULTS folder.");
+			Files.createDirectories(Paths.get("results"));
+		}
 		System.out.println("Saved to " + dest);
 		FileWriter file = new FileWriter(dest);
 	    BufferedWriter bw = new BufferedWriter(file);
 	    bw.write(x);
 	    bw.flush();
 	    bw.close();
+		} catch(Exception e) {
+			System.out.println("Unable to write json file.");
+			e.printStackTrace();
+		}
 	}
+	
 	public static void main(String[] args) {
 		try {
 			GraphDB graph = new GraphDB(2);
 			Set<String> list = new HashSet<String>();
-			list.add("wheel");
-			list.add("fragment");
+			list.add("cat");
+			list.add("tree");
 			list.add("ground");
-			MixFinder mix = new MixFinder(list, graph, 5);
+			MixFinder mix = new MixFinder(graph);
+			mix.traverse(list, 5);
+			graph.getconnections();
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

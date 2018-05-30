@@ -1,37 +1,37 @@
-/*
- * Pathfinder is uses a simple recursive depth-first search to traverse the graph and find all possible links (avoiding loops)
- * In line 146, the maximum permitted number of links can be restricted to a certain number
- * 
- * In my opinion, given that most links in the webchild graph are 1 and a tiny portion is slightly above 1,
- * I think this could be a more efficient function for getting multiple, useful links than other algorithms.
- * Pathfinder ignores the weights (takes them ALL to be 1).
- * 
- * WC files must have been processed by ReadCSV and Grapher.
- * 
+/**
+ *  Produced April-May of 2018. 
+ *  
+ *  This set of graph & traversals API was created for traversing the WebChild knowledge-base, but can be applied to various graph-structure databases.
+ *  
+ *  
+ *  This is code produced by a self taught programmer who has yet to matriculate in university.
+ *  Therefore if there were things I could have done better or techniques I could have used, please let me know, thank you.
+ *  
+ *  In each class exists a main method, which gives an example of how the class can be used.
+ *  @author LAM WEN HONG
  */
 
 import java.util.Scanner;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import java.util.Iterator;
-
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 
-// Connections: Object1, Object2, Link, Score
-// 
-
-// Depth-first search implemented here
-
-// VM arguments to use
+/**
+ * This class uses a simple recursive depth-first search to traverse the graph and find all possible links (avoiding loops).
+ * Pathfinder ignores the weights and relies instead on hops. (takes them ALL to be 1).
+ * The number of paths must be constrained (especially for large graphs). 
+ * 
+ */
 public class Pathfinder {
 	LinkedList<Integer> visited = new LinkedList<Integer>();
 	LinkedList<Integer> visitrs = new LinkedList<Integer>();
@@ -47,8 +47,12 @@ public class Pathfinder {
 	String q1,q2;
 	int q1id,q2id, link;
 	GraphDB graph;
-	
-	public Pathfinder(GraphDB graph1, int maxlinks) throws IOException {
+	/**
+	 * Pathfinder constructor.
+	 * @param graph1 the graph to traverse
+	 * @param maxlinks the maximum number of links to traverse through
+	 */
+	public Pathfinder(GraphDB graph1, int maxlinks) {
 		// Below lines are standard format for checking the query and visualizing the graph.
 		link = maxlinks;
 		objmap = new HashMap<Integer,String>();
@@ -56,54 +60,26 @@ public class Pathfinder {
 				
 		graph = graph1;
 		getidmaps();
-		//
 		answers = new LinkedList<String>();
-		
-		visited.add(q1id);
-		
-		
-		
 	}
 	
-	public void reset() {
+	private void reset() {
 		graph.reset();
+		visited.clear();
+		visitrs.clear();
+		visitweight.clear();
+		pathlist.clear();
+		queries.clear();
+		answers.clear();
+		idslist.clear();
 	}
 	
-	public void getidmaps() throws IOException {
+	private void getidmaps(){
 		objmap = graph.objmap;
 		rsmap = graph.rsmap;
 	} 
 	
-	
-	public void processquery(String query1, String query2) throws IOException {
-		queries.add(query1);
-		queries.add(query2);
-		q1 = query1;
-		q2 = query2;
-		
-		idslist = graph.process(queries);
-		if(idslist.size()!= 2) {
-			System.out.println("Something went wrong. Size is " + idslist.size());
-			System.out.println("One or more query was not found. Try something else");
-		}
-		q1id = idslist.get(0);
-		q2id = idslist.get(1);
-		for(Map.Entry<Integer,String> entry: objmap.entrySet()) {
-			if(query1.equals(entry.getValue())) {
-				q1id = entry.getKey();
-			} 
-			if(query2.equals(entry.getValue())) {
-				q2id = entry.getKey();
-			} 
-		}
-			
-		if(q1id == -1 || q2id == -1) {
-			System.out.println("Query not found. Program terminating.");
-			System.exit(0);
-		}
-	}
-	
-	public List<String[]> search(int query){
+	private List<String[]> search(int query){
 		System.out.println("Searching: ID " + query + " - presently " + (pathlist.size()/3) + " links found. " + visited.size() + " deep in the rabbit trail");
 		List<String[]> mylist = new LinkedList<String[]>();
 		
@@ -115,15 +91,33 @@ public class Pathfinder {
 		}
 		return mylist;
 	}
-	
-	public void findpaths() {
+	/**
+	 * Processes query and runs graph traversal. Prints error message and returns if query is not found.
+	 * Graph traversal results are stored as .json file. 
+	 * @param query1 first query word
+	 * @param query2 second query word
+	 */
+	public void traverse(String query1, String query2) {
+		q1 = query1;
+		q2 = query2;
+		Set<String> querylist = new HashSet<String>();
+		querylist.add(query1);
+		querylist.add(query2);
+		idslist = graph.process(querylist);
+		if(idslist.size()!= 2) {
+			System.out.println("One or more query was not found.");
+			return;
+		}
+		q1id = idslist.get(0);
+		q2id = idslist.get(1);
+		visited.add(q1id);
 		searcher();
 		makejson();
 		decode();
 		reset();
 	}
 	
-	public void searcher(){
+	private void searcher(){
 		
 		
 		int counter = 0;
@@ -201,7 +195,7 @@ public class Pathfinder {
 		
 	}
 	
-	public Map<String, Object> makejson() {
+	private Map<String, Object> makejson() {
 		// Make JSON FILE: TO DO ON 15 MARCH 
 		List<Map<String,Object>> listofpaths = new LinkedList<Map<String,Object>>();
 		
@@ -250,10 +244,14 @@ public class Pathfinder {
 		
 		
 		
-		String dest = "results/" +q1+ "_" +q2 +".json";
+		String dest = "results/" +q1+ "_" +q2 + "_ALL" + link +".json";
 		System.out.println("Writing to json.");
 		
 		try {
+		if(!Files.isDirectory(Paths.get("results"))){
+			System.out.println("Creating RESULTS folder.");
+			Files.createDirectories(Paths.get("results"));
+		}
 		Gson gson = new GsonBuilder().create();
 		FileWriter file = new FileWriter(dest);
 	    BufferedWriter bw = new BufferedWriter(file);
@@ -262,12 +260,12 @@ public class Pathfinder {
 		bw.close();
 		} catch(Exception e) {
 			e.printStackTrace();
-		} finally {
-			return toplvl;
-		}
+		} 
+		return toplvl;
+		
 	}
 	
-	public void decode() {
+	private List<String> decode() {
 		List<String> data = pathlist;
 		Iterator<String> iter = data.iterator();
 		while(iter.hasNext()) {
@@ -295,17 +293,18 @@ public class Pathfinder {
 			answers.add(sentence);
 			
 		}
+		return answers;
 	}
 	
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		try {
 			GraphDB graph = new GraphDB(2);
-			Pathfinder finder = new Pathfinder(graph, 2);
-			finder.processquery("fat", "guy");
+
 			graph.getconnections();
-			finder.findpaths();
-			// Should processquery be together with findpaths? just dump findpaths under processquery.
+			Pathfinder finder = new Pathfinder(graph, 3);
+			finder.traverse("cat","dog");
+
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

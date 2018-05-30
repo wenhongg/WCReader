@@ -1,99 +1,97 @@
-/*
- * Djikstra's algorithm is implemented here to find the shortest possible path.
- * A priority queue is used to make the runtime the best possible.
- * 
- * WC files must have been processed by ReadCSV and Grapher.
- * 
+/**
+ *  Produced April-May of 2018.
+ *  
+ *  This set of graph & traversals API was created for traversing the WebChild knowledge-base, but can be applied to various graph-structure databases.
+ *  
+ *  
+ *  This is code produced by a self taught programmer who has yet to matriculate in university.
+ *  Therefore if there were things I could have done better or techniques I could have used, please let me know, thank you.
+ *  
+ *  In each class exists a main method, which gives an example of how the class can be used.
+ *  @author LAM WEN HONG
  */
+
 import java.io.File;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.PriorityQueue;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Stack;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
 
+/**
+ * This class implements Djikstra's algorithm with the Priority queue to find the shortest possible path.
+ * It is not intended to be used on its own as typically much noise exists in a large knowledge-base and it would be useful to get a number of varied paths instead.
+ * As such, there is significant method overloading for various purposes (for use by other classes such as MixFinder).
+ * However, it is still possible to use this class alone. Do note however that the single path produced by this traverser cannot be stored in json format. 
+ * For that, YenShortestPaths is recommended.
+ * 
+ */
 public class ShortestPaths implements Comparator<Node>{
 	Scanner scan1,scan2;
 	Map<Integer,String> objmap,rsmap;
 	Scanner scanner1;
 	LinkedList<String> pathlist = new LinkedList<String>();
 	PriorityQueue<Node> pq;
-
+	List<Integer> idslist;
 	String q1,q2;
 	int q1id,q2id;
 	GraphDB graph;
-	public ShortestPaths(String query1, String query2, GraphDB graph1) throws IOException {
-		// Below lines are standard format for checking the query and visualizing the graph.
-		objmap = new HashMap<Integer,String>();
-		rsmap = new HashMap<Integer,String>();
-		q1 = query1;
-		q2 = query2;
-		
-		graph = graph1;
-		getidmaps();
-		processquery(query1,query2);
-		//
-		
-
-		decode();
-		System.out.println("ShortestPaths ended.");
-	}
 	
-	public ShortestPaths(GraphDB graph1) throws IOException {
+	/**
+	 * Constructs the traverser. Note this traverser produces a single path only.
+	 * @param graph1 the graph to traverse
+	 */
+	public ShortestPaths(GraphDB graph1) {
 		// Below lines are standard format for checking the query and visualizing the graph.
 		objmap = new HashMap<Integer,String>();
 		rsmap = new HashMap<Integer,String>();
-		
 		graph = graph1;
 		getidmaps();
 		System.out.println("Shortest path finder produced.");
-		//obtainpaths();
-		//
-		//decode();
-		//System.out.println("ShortestPaths ended.");
 	}
 	
-	
-	
-	public void processquery(String query1, String query2) throws IOException {
-		q1 = query1;
-		q2 = query2;
-		
-		for(Map.Entry<Integer,String> entry: objmap.entrySet()) {
-			if(query1.equals(entry.getValue())) {
-				q1id = entry.getKey();
-			} 
-			if(query2.equals(entry.getValue())) {
-				q2id = entry.getKey();
-			} 
-		}
-			
-		if(q1id == -1 || q2id == -1) {
-			System.out.println("Query not found. Program terminating.");
-			System.exit(0);
-		}
-	}
-	
-	public void getidmaps() throws IOException {
+	private void getidmaps() {
 		objmap = graph.objmap;
 		rsmap = graph.rsmap;
 	} 
 	
-	public void obtainpaths(int one, int two) {
+	void traverse(int one, int two) {
 		System.out.println("Searching ID " + one + "," + two);
 		q1id = one;
 		q2id = two;
 		
-		obtainpaths();
+		traverse();
 	}
 	
-	public void obtainpaths() {
+	public void traverse(String query1, String query2) {
+		q1 = query1;
+		q2 = query2;
+		Set<String> querylist = new HashSet<String>();
+		querylist.add(query1);
+		querylist.add(query2);
+		idslist = graph.process(querylist);
+		if(idslist.size()!= 2) {
+			System.out.println("Something went wrong. Size is " + idslist.size());
+			List<String> failresponse = new ArrayList<String>();
+			failresponse.add("One or more query was not found.");
+		}
+		q1id = idslist.get(0);
+		q2id = idslist.get(1);
+		
+		traverse();
+		decode();
+	}
+	
+	private void traverse() {
 		// djikstra's implementation (with PQ)
 
 		pq = new PriorityQueue<Node>(this);
@@ -137,7 +135,7 @@ public class ShortestPaths implements Comparator<Node>{
 		System.out.println(q1id+","+q2id);
 	}
 	
-	public void move() {
+	private void move() {
 		
 		Node x = pq.poll();
 		if(x.equals(graph.nodes[q2id])) {
@@ -165,8 +163,11 @@ public class ShortestPaths implements Comparator<Node>{
 		x.visited = true;
 	
 	}
-	
-	public Map<String, Object> decodem() {
+	/**
+	 * Saves the path details in a map. This is meant for use by the MixFinder class. All variables are then reset.
+	 * @return map of path details
+	 */
+	Map<String, Object> decodem() {
 		// Make JSON FILE: TO DO ON 15 MARCH 
 		
 		List<String> data = pathlist;
@@ -207,12 +208,15 @@ public class ShortestPaths implements Comparator<Node>{
 			
 			
 		
+		graph.reset();
 		reset();
 		pathlist.clear();
 		return onepath;
 	}
-	
-	public void decode() throws IOException {
+	/**
+	 * Prints result for display in console. All variables are then reset.
+	 */
+	public void decode() {
 		List<String> data = pathlist;
 		Iterator<String> iter = data.iterator();
 		while(iter.hasNext()) {
@@ -243,7 +247,8 @@ public class ShortestPaths implements Comparator<Node>{
 		reset();
 	}
 	
-	public void reset() {
+	private void reset() {
+		graph.reset();
 		for(Node x : graph.nodes) {
 			x.dist = Double.POSITIVE_INFINITY;
 			x.bestlink = -1;
@@ -256,20 +261,44 @@ public class ShortestPaths implements Comparator<Node>{
 	public int compare(Node x, Node y) {
 		return (int) Math.round(x.dist-y.dist);
 	}
-	
+	/**
+	 * Supply the query to main method as argument in the format Dataset-Query1-Query2 (e.g. 1-blue deer-green cat).
+	 * Else program finds relationship between cat and dog.
+	 * @param args provide dataset + 2 queries separated by a single dash (-) with no spaces.
+	 */
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		try {
-			GraphDB graph = new GraphDB(2);
-			ShortestPaths findpath = new ShortestPaths("milk","cell", graph);
-			graph.getconnections();
-			findpath.obtainpaths();
+			if(args.length==0) {
+				// This runs if no argument is provided.
+				GraphDB graph = new GraphDB(1);
+				ShortestPaths pathfinding = new ShortestPaths(graph);
+				graph.getconnections();
+				pathfinding.traverse("cat","dog");
+				System.out.println("Traversals ended.");
+			} else {
+				// If an argument is provided in the correct format.
+				String[] x = args.toString().split("-");
+				if(x.length==3) {
+					GraphDB graph = new GraphDB(Integer.parseInt(args[0]));
+					ShortestPaths pathfinding = new ShortestPaths(graph);
+					graph.getconnections();
+					pathfinding.traverse(args[1], args[2]);
+					System.out.println("Traversals ended");
+				} else {
+					// Argument is provided, but in the wrong format.
+					System.out.println("Provide dataset + 2 queries as argument to main method, separate them with a - (without spaces)");
+					System.out.println("For instance: 1-food additive-candy floss");
+				}
+			} 
+			
 		} catch(Exception e) {
 			e.printStackTrace();
+		} finally {
+			long stopTime = System.currentTimeMillis();
+			long elapsedTime = stopTime - startTime;
+			System.out.println(elapsedTime + " miliseconds elapsed.");
 		}
-		long stopTime = System.currentTimeMillis();
-	    long elapsedTime = stopTime - startTime;
-	    System.out.println(elapsedTime + " miliseconds elapsed.");
 	}
 	
 }

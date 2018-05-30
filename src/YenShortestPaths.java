@@ -1,21 +1,22 @@
-/*
- * Yen's algorithm is implemented here. This algorithm returns the k-shortest paths. 
-
- * Djikstra's is repeatedly used.
- * 
- * WC files must have been processed by ReadCSV and Grapher.
- * 
- * There's still a bug somewhere ...
- * 
+/**
+ *  Produced April-May of 2018. 
+ *  
+ *  This set of graph & traversals API was created for traversing the WebChild knowledge-base, but can be applied to various graph-structure databases.
+ *  
+ *  
+ *  This is code produced by a self taught programmer who has yet to matriculate in university.
+ *  Therefore if there were things I could have done better or techniques I could have used, please let me know, thank you.
+ *  
+ *  In each class exists a main method, which gives an example of how the class can be used.
+ *  @author LAM WEN HONG
  */
 
 import java.io.BufferedWriter;
+
 import java.util.Set;
 import java.util.HashSet;
-
-
+import java.nio.file.*;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,42 +29,54 @@ import java.util.Map;
 import java.util.HashMap;
 import com.google.gson.*;
 
+/**
+ * This class is an implementation of Yen's algorithm, which returns the k-shortest paths.
+ * Djikstra's algorithm (implemented in ShortestPaths class) is repeatedly called in this algorithm.
+ * 
+ * k can be chosen by the user. Note that time complexity is O(KN(M + N log N)) where N is number of nodes and M is number of edges.
+ * After calling the constructor to produce the traverser, call traverse with the 2 queries.
+ */
 public class YenShortestPaths implements Comparator<Node>{
 	Scanner scan1,scan2;
 	Map<Integer,String> objmap,rsmap;
 	Scanner scanner1;
 	LinkedList<String> pathlist = new LinkedList<String>();
 	PriorityQueue<Node> pq;
-
 	String[] temp1,temp2;
-	
-	List<String> answers;
-	List<String> container;
+	List<String> answers, container;
 	String q1,q2;
 	int q1id,q2id, countx;
 	
 	List<Integer> idslist;
 	GraphDB graph;
+
 	
+	/**
+	 * This creates the traverser.
+	 * @param graph1 the graph to run traversal on
+	 * @param count k. the number of shortest paths to be returned
+	 */
 	public YenShortestPaths(GraphDB graph1, int count) {
-		
 		countx = count;
 		answers = new LinkedList<String>();
 		container = new LinkedList<String>();
 		
-		
 		graph = graph1;
 		getidmaps();
 		
-		
-		
-		//handler(count);
-		
-		
-		System.out.println("YenShortestPaths ended.");
+		System.out.println("Yen's Algorithm traverser produced.");
 	}
 	
-	public List<String> findpaths(String query1, String query2){
+	/**
+	 * This method runs Yen's algorithm. 
+	 * The queries are searched in the map to obtain the IDs, and then these nodes are treated by the graph's process method.
+	 * If query failed because one or more node was not found, the return list will have only 1 entry which is the error message.
+	 * The .json file is produced, and subsequently both the traverser and graph are reset.
+	 * @param query1 first word
+	 * @param query2 second word
+	 * @return a list of answers / fail response.
+	 */
+	public List<String> traverse(String query1, String query2){
 		q1 = query1;
 		q2 = query2;
 		Set<String> querylist = new HashSet<String>();
@@ -86,25 +99,29 @@ public class YenShortestPaths implements Comparator<Node>{
 		return answerx;
 	}
 	
-	public void masterreset() {
+	public void kchange(int links) {
+		countx = links;
+	}
+	
+	private void masterreset() {
 		pathlist.clear();
 		container.clear();
 		reset();
 		System.out.println("Master reset.");
-		int q1id = -1;
-		int q2id = -1;
+		q1id = -1;
+		q2id = -1;
 	}
 	
-	public void getidmaps() {
+	private void getidmaps() {
 		rsmap = graph.rsmap;
 		objmap = graph.objmap;
 	}
 	
-	public void handler(int k) {
+	private void handler(int k) {
 		int[] not = new int[0];
 		if(container.size()==0) {
 			
-			obtainpaths(q1id,q2id, not);
+			traverse(q1id,q2id, not);
 			reset();
 			if(pathlist.size()==0) {
 				System.out.println("No paths at all.");
@@ -163,27 +180,9 @@ public class YenShortestPaths implements Comparator<Node>{
 						}
 					}
 				}
-				
-				/*
-				for(int a=0; a< graph.nodes[Integer.parseInt(arr[j])].relations.size(); a+=1) {
-					if(graph.nodes[Integer.parseInt(arr[j])].relations.get(a)[0].equals(arr[j+1].toString())) {
-						graph.nodes[Integer.parseInt(arr[j])].removed.add(graph.nodes[Integer.parseInt(arr[j])].relations.remove(a));
-						//System.out.println("Link removed");
-						break;
-					}
-				}
-				
-				for(int a=0; a< graph.nodes[Integer.parseInt(arr[j+1])].relations.size(); a+=1) {
-					if(graph.nodes[Integer.parseInt(arr[j+1])].relations.get(a)[0].equals(arr[j].toString())) {
-						graph.nodes[Integer.parseInt(arr[j+1])].removed.add(graph.nodes[Integer.parseInt(arr[j+1])].relations.remove(a));
-						//System.out.println("Link removed");
-						break;
-					}
-				}
-				*/
 				// Do djikstras on graph with missing link
 				System.out.println(Integer.parseInt(arr[j]) + " node to be spur.");
-				obtainpaths(Integer.parseInt(arr[j]),q2id, not);
+				traverse(Integer.parseInt(arr[j]),q2id, not);
 				
 				reset();
 				
@@ -199,7 +198,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		}
 	}
 	
-	public void returnlinks() {
+	private void returnlinks() {
 		for(Node x : graph.nodes) {
 			while(x.removed.size()!=0) {
 				x.relations.add(x.removed.remove(0));
@@ -207,7 +206,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		}
 	}
 	
-	public void write() {
+	private void write() {
 		// Writes the best route to container.
 		double minscore= Double.POSITIVE_INFINITY;
 		int index = -1;
@@ -228,7 +227,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		container.add(pathlist.remove(index));
 	}
 	
-	public void obtainpaths(int id1,int id2, int[] not) {
+	private void traverse(int id1,int id2, int[] not) {
 		// djikstra's implementation (with PQ)
 
 		pq = new PriorityQueue<Node>(this);
@@ -282,7 +281,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		//System.out.println(id1+","+id2 +" is path identified.");
 	}
 	
-	public void reset() {
+	private void reset() {
 		for(Node x : graph.nodes) {
 			x.dist = Double.POSITIVE_INFINITY;
 			x.bestlink = -1;
@@ -293,7 +292,7 @@ public class YenShortestPaths implements Comparator<Node>{
 		
 	}
 	
-	public void move(int[] not) {
+	private void move(int[] not) {
 		
 		Node x = pq.poll();
 		if(x.equals(graph.nodes[q2id])) {
@@ -327,8 +326,8 @@ public class YenShortestPaths implements Comparator<Node>{
 		x.visited = true;
 	
 	}
-	
-	public Map<String, Object> makejson() {
+
+	private Map<String, Object> makejson() {
 		// Make JSON FILE
 		List<Map<String,Object>> listofpaths = new LinkedList<Map<String,Object>>();
 		
@@ -381,6 +380,10 @@ public class YenShortestPaths implements Comparator<Node>{
 		System.out.println("Writing to json.");
 		
 		try {
+		if(!Files.isDirectory(Paths.get("results"))){
+			System.out.println("Creating RESULTS folder.");
+			Files.createDirectories(Paths.get("results"));
+		}
 		Gson gson = new GsonBuilder().create();
 		FileWriter file = new FileWriter(dest);
 	    BufferedWriter bw = new BufferedWriter(file);
@@ -389,11 +392,14 @@ public class YenShortestPaths implements Comparator<Node>{
 		bw.close();
 		} catch(Exception e) {
 			e.printStackTrace();
-		} finally {
-			return toplvl;
-		}
+		} 
+		return toplvl;
+		
 	}
-	
+	/**
+	 * Extracts information from container of paths and returns it as plain text. Does nothing else.
+	 * @return list of links in plain text
+	 */
 	public List<String> decode() {
 		List<String> data = container;
 		Iterator<String> iter = data.iterator();
@@ -432,15 +438,38 @@ public class YenShortestPaths implements Comparator<Node>{
 	public int compare(Node x, Node y) {
 		return (int) Math.round(x.dist-y.dist);
 	}
-	
+	/**
+	 * Supply the query to main method as argument in the format Dataset-Query1-Query2 (e.g. 1-blue deer-green cat).
+	 * Else program finds relationship between cat and dog.
+	 * By default, this program is set to retrieve exactly 5 paths. 
+	 * @param args provide dataset + 2 queries separated by a single dash (-) with no spaces.
+	 */
 	public static void main(String[] args) {
 		long startTime = System.currentTimeMillis();
 		try {
-			GraphDB graph = new GraphDB(1);
-			YenShortestPaths pathfinding = new YenShortestPaths(graph, 5);
-			graph.getconnections();
-			pathfinding.findpaths("additive","candy");
-			System.out.println("Program ended.");
+			if(args.length==0) {
+				// This runs if no argument is provided.
+				GraphDB graph = new GraphDB(1);
+				YenShortestPaths pathfinding = new YenShortestPaths(graph, 5);
+				graph.getconnections();
+				pathfinding.traverse("cat","dog");
+				System.out.println("Traversals ended.");
+			} else {
+				// If an argument is provided in the correct format.
+				String[] x = args.toString().split("-");
+				if(x.length==3) {
+					GraphDB graph = new GraphDB(Integer.parseInt(args[0]));
+					YenShortestPaths pathfinding = new YenShortestPaths(graph, 5);
+					graph.getconnections();
+					pathfinding.traverse(args[1], args[2]);
+					System.out.println("Traversals ended");
+				} else {
+					// Argument is provided, but in the wrong format.
+					System.out.println("Provide dataset + 2 queries as argument to main method, separate them with a - (without spaces)");
+					System.out.println("For instance: 1-food additive-candy floss");
+				}
+			} 
+			
 		} catch(Exception e) {
 			e.printStackTrace();
 		} finally {
