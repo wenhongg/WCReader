@@ -7,11 +7,6 @@ FINAL OUTPUT IS: objectids1.csv, relationids1.csv and connections1.csv
 
 ReadCSVTwo reads hasMember, physical and hasSubstance, the output is relationids2.csv, xobjectids2.csv and xconnections2.csv
 
-GrapherTwo class deals with output produced by ReadCSVTwo class
-
-FINAL OUTPUT IS: objectids2.csv, relationids2.csv (from ReadCSVTwo) and connections2.csv.
-
-GraphDB has to produce rsmap and objmap first, check if query exists, then produce connections.
-(Follow YenShortestPaths sample)
+FINAL OUTPUT IS: objectids2.csv, relationids2.csv and connections2.csv.
 
 connections .CSV follows the format: object1 ID, object2 ID, relationship ID, weight
